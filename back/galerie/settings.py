@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
 if os.environ["DEBUG"] == "False":
     DEBUG = False
@@ -226,6 +227,8 @@ CACHES = {
 # Password login: failures allowed per account before it is put on hold.
 LOGIN_MAX_FAILURES = 10
 LOGIN_FAILURE_WINDOW = 15 * 60
+
+TEST_RUNNER = "galerie.test_runner.TempMediaRunner"
 
 # Celery settings
 CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0"
