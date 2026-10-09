@@ -85,5 +85,7 @@ jobs:
           # Same major version as webinstaller/Dockerfile.
           node-version: "17"
       - run: npm ci
+      - name: Tests
+        run: npm test -- --watchAll=false
       - name: Build the bundles
         run: npx webpack --mode production --output-path "$RUNNER_TEMP/bundles"
