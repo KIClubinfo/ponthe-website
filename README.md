@@ -86,6 +86,10 @@ Le backend du site est développé en Python avec le framework Django. Le gestio
 En prod, le container back lance un serveur gunicorn qui fait le lien entre NGINX et le serveur Django Python.
 Afin de faciliter le chargement de nouvelles galeries, le back contient aussi un serveur redis et celery permettant d'effectuer des tâches de mainère asynchrône. Cette fonctionnalité permet d'éviter de recevoir un timeout de NGINX lorsque l'upload est longue.
 
+#### Suppression de photos et de galeries
+
+Supprimer une photo (ou une galerie) retire aussi ses fichiers du site : la miniature est effacée et l'original est déplacé dans ```back/media/.corbeille/<slug>/uploads/```. Ce dossier n'est servi par aucune route et n'est jamais vidé automatiquement : pour restaurer une photo, remettre son fichier dans le dossier ```uploads/``` de la galerie puis relancer l'import ; pour libérer de la place, vider le dossier à la main.
+
 ### Frontend
 
 Le frontend du site est développé en JavaScript avec le framework React. Les fichiers JS sont, lors du lancement du container webinstaller, ajoutés dans des fichiers "bundles" qui sont placés dans le dossier ```/src/galerie/static/react/``` du back qui pourra ensuite les intégrer dans les templates html. Ces bundles contiennent l'ensemble du contenu React.

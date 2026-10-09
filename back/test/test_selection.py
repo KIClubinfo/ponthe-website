@@ -6,6 +6,7 @@ import zipfile
 from api.models import File, Gallery, Report, Year
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
+from galerie import loader
 from galerie.loader import gallery_path
 
 from .test_api import post_json
@@ -268,3 +269,103 @@ class DeletePicsTest(TestCase):
             {"slug": "select-delete", "file_full_names": "picture.jpg"},
         )
         self.assertEqual(response.status_code, 400)
+
+
+class DeletedPicturesLeaveTheSiteTest(TestCase):
+    """Deleting a picture takes its files with it, and it does not come back."""
+
+    SLUG = "select-files"
+
+    def setUp(self):
+        self.gallery = Gallery.objects.create(
+            name="Select files",
+            slug=self.SLUG,
+            description="",
+            visibility=Gallery.Visibility.PUBLIC,
+            year=Year.objects.create(name="2026-2027"),
+        )
+        for folder in ("uploads", "thumbnails"):
+            os.makedirs(gallery_path(self.SLUG, folder))
+            for name in ("gone.jpg", "kept.jpg"):
+                with open(gallery_path(self.SLUG, folder, name), "wb") as f:
+                    f.write(b"fake image bytes")
+        with open(gallery_path(self.SLUG, "uploads", "notes.txt"), "wb") as f:
+            f.write(b"never registered")
+        loader.load_folder_into_gallery(self.SLUG)
+        self.addCleanup(shutil.rmtree, gallery_path(self.SLUG), ignore_errors=True)
+        self.addCleanup(shutil.rmtree, self.trash(), ignore_errors=True)
+        self.client.force_login(User.objects.create_user("manager", is_staff=True))
+
+    def trash(self, *parts):
+        return gallery_path(".corbeille", self.SLUG, "uploads", *parts)
+
+    def names_in_gallery(self):
+        files = File.objects.filter(gallery=self.gallery)
+        return sorted(files.values_list("file_full_name", flat=True))
+
+    def test_bulk_delete_removes_the_files(self):
+        response = post_json(
+            self.client,
+            "/api/gallery/pics/delete_many/",
+            {"slug": self.SLUG, "file_full_names": ["gone.jpg"]},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            os.listdir(gallery_path(self.SLUG, "thumbnails")), ["kept.jpg"]
+        )
+        self.assertEqual(
+            sorted(os.listdir(gallery_path(self.SLUG, "uploads"))),
+            ["kept.jpg", "notes.txt"],
+        )
+        # The original is kept aside, out of reach of the site.
+        with open(self.trash("gone.jpg"), "rb") as f:
+            self.assertEqual(f.read(), b"fake image bytes")
+
+    def test_a_deleted_picture_does_not_come_back_with_the_next_import(self):
+        post_json(
+            self.client,
+            "/api/gallery/pics/delete_many/",
+            {"slug": self.SLUG, "file_full_names": ["gone.jpg"]},
+        )
+        loader.load_folder_into_gallery(self.SLUG)
+        self.assertEqual(self.names_in_gallery(), ["kept.jpg"])
+
+    def test_single_delete_removes_the_files_too(self):
+        response = post_json(
+            self.client,
+            "/api/gallery/pics/delete/",
+            {"name": self.gallery.name, "file_full_name": "gone.jpg"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(os.path.exists(gallery_path(self.SLUG, "uploads", "gone.jpg")))
+        self.assertTrue(os.path.exists(self.trash("gone.jpg")))
+
+    def test_deleting_a_gallery_removes_its_folder(self):
+        response = post_json(
+            self.client, "/api/gallery/delete/", {"name": self.gallery.name}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(os.path.exists(gallery_path(self.SLUG)))
+        self.assertEqual(
+            sorted(os.listdir(self.trash())), ["gone.jpg", "kept.jpg", "notes.txt"]
+        )
+
+    def test_a_gallery_can_be_created_again_under_the_same_name(self):
+        new = {"name": self.gallery.name, "description": "Bis", "visibility": "privée"}
+        # While it exists, its folder is in the way.
+        response = post_json(self.client, "/api/galleries/create/", new)
+        self.assertEqual(response.status_code, 400)
+
+        post_json(self.client, "/api/gallery/delete/", {"name": self.gallery.name})
+        response = post_json(self.client, "/api/galleries/create/", new)
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(os.listdir(gallery_path(self.SLUG, "uploads")), [])
+        self.assertEqual(Gallery.objects.filter(slug=self.SLUG).count(), 1)
+
+    def test_a_missing_file_does_not_prevent_the_deletion(self):
+        os.remove(gallery_path(self.SLUG, "uploads", "gone.jpg"))
+        os.remove(gallery_path(self.SLUG, "thumbnails", "gone.jpg"))
+        File.objects.get(gallery=self.gallery, file_full_name="gone.jpg").delete()
+        self.assertEqual(self.names_in_gallery(), ["kept.jpg"])

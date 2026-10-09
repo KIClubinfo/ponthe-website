@@ -188,13 +188,10 @@ def create_gallery(request):
         )
     serializer = GallerySerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
+    # Folders first: if they cannot be made, no gallery is left without one.
     try:
-        os.mkdir(str(settings.BASE_DIR) + "/media/" + request.data["slug"])
-        os.mkdir(str(settings.BASE_DIR) + "/media/" + request.data["slug"] + "/uploads")
-        os.mkdir(
-            str(settings.BASE_DIR) + "/media/" + request.data["slug"] + "/thumbnails"
-        )
+        for folder in ("uploads", "thumbnails"):
+            os.makedirs(loader.gallery_path(request.data["slug"], folder))
     except OSError:
         return Response(
             {
@@ -203,6 +200,7 @@ def create_gallery(request):
             },
             status=400,
         )
+    serializer.save()
 
     return Response(serializer.data)
 
@@ -276,8 +274,8 @@ def change_view(request):
 @permission_classes([IsManager])
 def delete_gallery(request):
     gal = Gallery.objects.get(name=request.data["name"])
+    # api.signals takes the folder off the disk.
     gal.delete()
-    # TODO DELETE FOLDER
     return Response(GallerySerializer(gal).data)
 
 
@@ -288,13 +286,13 @@ def delete_pic(request):
     file = File.objects.get(
         gallery=gallery, file_full_name=request.data["file_full_name"]
     )
+    # api.signals takes the files off the disk.
     file.delete()
-    # TODO DELETE FILE CONCERNED
     return Response(FileSerializer(file).data)
+
+
 def selection_error(message, status=400):
     return Response({"status": "error", "message": message}, status=status)
-
-
 
 
 @api_view(["POST"])
@@ -361,7 +359,12 @@ def download_pics(request):
 @api_view(["POST"])
 @permission_classes([IsManager])
 def delete_pics(request):
-    """Bulk version of delete_pic: the manager selected several at once."""
+    """
+    Bulk version of delete_pic: the manager selected several at once.
+
+    The files go with the rows (see api.signals), so that a picture deleted
+    here is neither served any more nor brought back by the next import.
+    """
     gallery = Gallery.objects.filter(slug=request.data.get("slug")).first()
     if gallery is None:
         return Response(
