@@ -14,11 +14,13 @@ import ReportDialog from './ReportDialog';
 
 const PictureMosaic = (props) => {
 
-    const [picsList, setPicsList] = useState([]);
     const [state, setState] = useState(false);
     //Current loaded picture in modal
     const [current, setCurrent] = useState(null);
-    const [pics, setPics] = useState([]);
+    // Derived from the props at each render: kept in state, every picture was
+    // rebuilt each time one was ticked.
+    const files = Object.values(props.result || {});
+    const pics = files.map(file => file.link + '/uploads/' + file.file_full_name);
     // Report dialog open state
     const [reportOpen, setReportOpen] = useState(false);
 
@@ -106,28 +108,6 @@ const PictureMosaic = (props) => {
     }
 
     useEffect(() => {
-        const picsTemp = []
-        const picsDiv = []
-        for (const pic in props.result) {
-            const file = props.result[pic]
-            picsTemp.push(file.link + '/uploads/' + file.file_full_name)
-            picsDiv.push(
-                <Col key={pic} xs="4" sm="3" lg="2">
-                    <GallerySticker img={file.link + '/uploads/' + file.file_full_name}
-                        thumb={file.link + '/thumbnails/' + file.file_full_name}
-                        modal_func={toggleModal}
-                        selectionMode={props.selectionMode}
-                        selected={props.selected && props.selected.has(file.file_full_name)}
-                        onToggleSelect={props.onToggleSelect}
-                        fileFullName={file.file_full_name} />
-                </Col>
-            )
-        }
-        setPicsList(picsDiv)
-        setPics(picsTemp)
-    }, [props.result, props.selectionMode, props.selected]);
-
-    useEffect(() => {
         const handleClickOutside = (event) => {
           if (ref.current && !ref.current.contains(event.target)
             && ref2.current && !ref2.current.contains(event.target)
@@ -172,7 +152,17 @@ const PictureMosaic = (props) => {
         <>
             <Container fluid>
                 <Row className='g-1'>
-                    {picsList}
+                    {files.map((file, index) => (
+                        <Col key={index} xs="4" sm="3" lg="2">
+                            <GallerySticker img={file.link + '/uploads/' + file.file_full_name}
+                                thumb={file.link + '/thumbnails/' + file.file_full_name}
+                                modal_func={toggleModal}
+                                selectionMode={props.selectionMode}
+                                selected={props.selected && props.selected.has(file.file_full_name)}
+                                onToggleSelect={props.onToggleSelect}
+                                fileFullName={file.file_full_name} />
+                        </Col>
+                    ))}
                 </Row>
             </Container>
             {state && (

@@ -119,6 +119,39 @@ describe('Gallery selection mode', () => {
     });
   });
 
+  test('a refused download shows the reason given by the server', async () => {
+    mockFetch();
+    const baseFetch = global.fetch;
+    global.fetch = jest.fn((url, options) => {
+      if (url.includes('/api/gallery/pics/download/')) {
+        return Promise.resolve({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({
+            status: 'error',
+            message: 'Sélection trop grande : 100 photos au maximum par téléchargement.',
+          }),
+        });
+      }
+      return baseFetch(url, options);
+    });
+    window.alert = jest.fn();
+    render(<Gallery />);
+    await waitFor(() => expect(screen.getByText('Ma Galerie Test')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('ChecklistIcon'));
+    mosaicProps.onToggleSelect('photo1.jpg');
+    await waitFor(() => expect(screen.getByText('1 photo(s) sélectionnée(s)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Télécharger la sélection'));
+
+    await waitFor(() =>
+      expect(window.alert).toHaveBeenCalledWith(
+        'Sélection trop grande : 100 photos au maximum par téléchargement.'
+      )
+    );
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
   test('leaving selection mode clears the selection', async () => {
     render(<Gallery />);
     await waitFor(() => expect(screen.getByText('Ma Galerie Test')).toBeInTheDocument());

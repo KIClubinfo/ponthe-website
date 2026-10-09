@@ -10,6 +10,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FlagIcon from '@mui/icons-material/Flag';
 import ReportList from './ReportList';
+import useSelection from './useSelection';
 import GallerySticker from './GallerySticker'
 import Cookies from 'js-cookie';
 import CustomNavbar from './Navbar';
@@ -39,8 +40,7 @@ export default function Gallery({props}){
     const [selectedFile, setSelectedFile] = useState(null);
     const [isCompact, setIsCompact] = useState(false);
     // Mode sélection multiple
-    const [selectionMode, setSelectionMode] = useState(false);
-    const [selected, setSelected] = useState(new Set());
+    const {selectionMode, selected, toggleSelectionMode, toggleSelect, downloadSelected} = useSelection(gallery_slug);
 
     // Filtre « photos signalées » : actif ou non
     const [reportsOnly, setReportsOnly] = useState(false);
@@ -126,56 +126,6 @@ export default function Gallery({props}){
 
     const toggleCompact = () => {
       setIsCompact(prev => !prev);
-    }
-
-    //Enter/leave the multi-selection mode; leaving clears the selection
-    const toggleSelectionMode = () => {
-      setSelectionMode(prev => !prev);
-      setSelected(new Set());
-    }
-
-    //Add/remove one picture from the selection
-    const toggleSelect = (fileFullName) => {
-      setSelected(prev => {
-        const next = new Set(prev);
-        if (next.has(fileFullName)) {
-          next.delete(fileFullName);
-        } else {
-          next.add(fileFullName);
-        }
-        return next;
-      });
-    }
-
-    //Download the selection as a single zip built by the backend
-    const downloadSelected = async () => {
-      if (selected.size === 0) return;
-      const downloadOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': Cookies.get('csrftoken') },
-        body: JSON.stringify({ slug: gallery_slug, file_full_names: Array.from(selected) })
-      };
-      try {
-        const response = await fetch('/api/gallery/pics/download/', downloadOptions);
-        if (!response.ok) {
-          alert('Impossible de télécharger les photos sélectionnées.');
-          return;
-        }
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = gallery_slug + '-selection.zip';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.log(err);
-        alert('Erreur réseau : impossible de contacter le serveur.');
-      }
     }
 
     //Delete every selected picture after a confirmation
@@ -337,32 +287,6 @@ export default function Gallery({props}){
               }
           );
     }
-    // A report has been dealt with, or was groundless: take it off the list.
-    // The picture leaves the "reported" filter once its last report is gone.
-    const dismissReport = (reportId) => {
-      const dismissOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': Cookies.get('csrftoken') },
-        body: JSON.stringify({ id: reportId })
-      };
-      fetch('/api/gallery/reports/dismiss/', dismissOptions)
-            .then(res => {
-              if (!res.ok) {
-                alert("Impossible de classer ce signalement.")
-                return
-              }
-              const remaining = reports.filter(r => r.id !== reportId)
-              setReports(remaining)
-              setReportedNames(new Set(remaining.map(r => r.file_full_name)))
-            })
-            .catch((error) => {
-              console.log(error)
-              alert("Impossible de classer ce signalement.")
-            });
-    }
-
 
     const changeView = (view) => {
       const visibilityOptions = {
@@ -377,7 +301,7 @@ export default function Gallery({props}){
             .then(res => res.json())
             .then(
               (result) => {
-                setVisibility(result.visibility)
+                setView(result.view)
               },
               (error) => {
                 console.log(error)
@@ -411,6 +335,32 @@ export default function Gallery({props}){
                 console.log(error)
               }
             );
+    }
+
+    // A report has been dealt with, or was groundless: take it off the list.
+    // The picture leaves the "reported" filter once its last report is gone.
+    const dismissReport = (reportId) => {
+      const dismissOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': Cookies.get('csrftoken') },
+        body: JSON.stringify({ id: reportId })
+      };
+      fetch('/api/gallery/reports/dismiss/', dismissOptions)
+            .then(res => {
+              if (!res.ok) {
+                alert("Impossible de classer ce signalement.")
+                return
+              }
+              const remaining = reports.filter(r => r.id !== reportId)
+              setReports(remaining)
+              setReportedNames(new Set(remaining.map(r => r.file_full_name)))
+            })
+            .catch((error) => {
+              console.log(error)
+              alert("Impossible de classer ce signalement.")
+            });
     }
 
     // The flag is a toggle: only reported pictures, then back to normal
