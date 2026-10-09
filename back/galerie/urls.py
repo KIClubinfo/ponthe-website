@@ -16,12 +16,12 @@ Including another URLconf
 """
 
 import django_cas_ng.views
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 from . import views
+
+admin.site.login = views.admin_login
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -46,7 +46,6 @@ urlpatterns = [
     path("add_promo/", views.add_promo, name="add_promo"),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-else:
-    urlpatterns.append(path("media/<path:path>", views.media))
+# In debug mode too: the files used to be served straight from the folder
+# then, private galleries included, with no access check at all.
+urlpatterns.append(path("media/<path:path>", views.media))

@@ -1,8 +1,11 @@
+import os
+import shutil
 from unittest import mock
 
 from api.models import Gallery, Year
+from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 PUBLIC = Gallery.Visibility.PUBLIC
 SCHOOL = Gallery.Visibility.SCHOOL
@@ -84,6 +87,37 @@ class GalleryAccessTest(TestCase):
                     response["X-Accel-Redirect"],
                     f"/protected/{slug}/uploads/picture.jpg",
                 )
+
+    def test_debug_mode_serves_the_files_behind_the_same_check(self):
+        public, private = self.slugs[PUBLIC], self.slugs[PRIVATE]
+        for slug in (public, private, ".corbeille"):
+            folder = os.path.join(settings.MEDIA_ROOT, slug, "uploads")
+            os.makedirs(folder, exist_ok=True)
+            self.addCleanup(shutil.rmtree, os.path.dirname(folder), ignore_errors=True)
+            with open(os.path.join(folder, "picture.jpg"), "wb") as f:
+                f.write(b"picture of " + slug.encode())
+
+        with override_settings(DEBUG=True):
+            response = self.client.get(f"/media/{public}/uploads/picture.jpg")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                b"".join(response.streaming_content), b"picture of " + public.encode()
+            )
+            # Not logged in: neither a private gallery nor what was deleted.
+            for slug in (private, ".corbeille"):
+                response = self.client.get(f"/media/{slug}/uploads/picture.jpg")
+                self.assertEqual(response.status_code, 403)
+
+    def test_a_path_cannot_leave_the_gallery_it_was_checked_against(self):
+        public, private = self.slugs[PUBLIC], self.slugs[PRIVATE]
+        for path in (
+            f"{public}/../{private}/uploads/picture.jpg",
+            f"{public}/./uploads/picture.jpg",
+            f"{public}//uploads/picture.jpg",
+            f"{public}/uploads/",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(f"/media/{path}").status_code, 403)
 
     def test_file_names_are_escaped_for_nginx(self):
         slug = self.slugs[PUBLIC]

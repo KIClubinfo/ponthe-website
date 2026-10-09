@@ -21,10 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if os.environ["DEBUG"] == "False":
-    DEBUG = False
-else:
-    DEBUG = True
+def env_flag(name):
+    """
+    True only when the variable says so. Anything else (unset, "False", "0",
+    a typo) is False: a switch like DEBUG must fail towards production.
+    """
+    return os.environ.get(name, "").strip().lower() in ("true", "1", "yes", "on")
+
+
+# The test used to be `!= "False"`: "false" or "0" left the site in debug mode,
+# with a public secret key and the media served to anyone.
+DEBUG = env_flag("DEBUG")
 
 if DEBUG:
     ALLOWED_HOSTS = [

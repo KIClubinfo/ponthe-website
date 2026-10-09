@@ -10,11 +10,13 @@ from django.conf import settings
 from django.contrib.auth import models as models2
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.views import redirect_to_login
 from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.views.static import serve
 
 from .settings import BASE_DIR, LOGIN_REDIRECT_URL, LOGIN_URL
 
@@ -72,6 +74,20 @@ class LoginView(auth_views.LoginView):
         return super().form_valid(form)
 
 
+def admin_login(request, **kwargs):
+    """
+    Stands in for the login form of the Django admin, which has no limit on
+    failed attempts: staff accounts are the ones worth guessing. Visitors are
+    sent to the site's own login, which has one.
+    """
+    if request.user.is_authenticated:
+        if request.user.is_active and request.user.is_staff:
+            return HttpResponseRedirect(reverse("admin:index"))
+        # No redirect here: the login page sends logged-in users straight back.
+        return HttpResponseForbidden("Ce compte n'a pas accès à l'administration.")
+    return redirect_to_login(request.GET.get("next") or reverse("admin:index"))
+
+
 def root_redirect(request):
     if request.user.is_authenticated:
         return HttpResponseRedirect(reverse(LOGIN_REDIRECT_URL))
@@ -81,20 +97,28 @@ def root_redirect(request):
 
 def media(request, path):
     """
-    When trying to access /media/path this function makes sures the user is authenticated.
+    When trying to access /media/path this function makes sures the user may see the gallery.
     If it is the case then the media is served by the nginx server.
     Otherwise an http access error code is sent back.
     """
     user = request.user
     dirs = path.split("/")
+    # The access check is made on the first segment only: a path that climbs
+    # back up would be checked against one gallery and served from another.
+    # nginx refuses such paths today; this must not depend on it.
+    if any(part in ("", ".", "..") for part in dirs):
+        return HttpResponseForbidden()
     gallery = Gallery.objects.filter(slug=dirs[0])
     if gallery.count() == 0:
-        print("gallery not found")
         return HttpResponseForbidden()
     else:
         access_granted = gallery.first().can_user_access(user)
 
     if access_granted:
+        if settings.DEBUG:
+            # No nginx in front of the development server to follow the
+            # redirect below: serve the file here, after the same check.
+            return serve(request, path, document_root=settings.MEDIA_ROOT)
         response = HttpResponse()
         # Content-type will be detected by nginx
         del response["Content-Type"]

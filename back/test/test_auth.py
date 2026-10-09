@@ -187,3 +187,61 @@ class ProxyTest(TestCase):
         self.assertNotIn("Strict-Transport-Security", plain)
         forwarded = self.client.get("/", HTTP_X_FORWARDED_PROTO="https")
         self.assertEqual(forwarded["Strict-Transport-Security"], "max-age=3600")
+
+
+class AdminLoginTest(TestCase):
+    """The admin has no login form of its own: the site's is the one with a limit."""
+
+    def test_visitors_are_sent_to_the_site_login(self):
+        for url in (
+            "/admin/",
+            "/admin/login/",
+            "/admin/login/?next=/admin/api/gallery/",
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url, follow=True)
+                self.assertEqual(
+                    response.redirect_chain[-1][0].split("?")[0], "/login/"
+                )
+
+    def test_the_admin_form_does_not_try_passwords(self):
+        User.objects.create_user("chef", password="right", is_staff=True)
+        response = self.client.post(
+            "/admin/login/", {"username": "chef", "password": "right"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_staff_reach_the_admin_once_logged_in(self):
+        self.client.force_login(User.objects.create_user("chef", is_staff=True))
+        self.assertRedirects(self.client.get("/admin/login/"), "/admin/")
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+    def test_other_accounts_are_refused_without_a_redirect_loop(self):
+        self.client.force_login(User.objects.create_user("student"))
+        response = self.client.get("/admin/", follow=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertLessEqual(len(response.redirect_chain), 1)
+
+
+class EnvFlagTest(TestCase):
+    def test_debug_has_to_be_asked_for(self):
+        from galerie.settings import env_flag
+
+        for value, expected in (
+            ("True", True),
+            ("true", True),
+            ("1", True),
+            ("False", False),
+            ("false", False),
+            ("0", False),
+            ("no", False),
+            ("", False),
+            ("Flase", False),
+        ):
+            with self.subTest(value=value), mock.patch.dict(
+                "os.environ", {"SOME_FLAG": value}
+            ):
+                self.assertIs(env_flag("SOME_FLAG"), expected)
+        with mock.patch.dict("os.environ", clear=True):
+            self.assertIs(env_flag("SOME_FLAG"), False)
