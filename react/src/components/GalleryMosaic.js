@@ -25,7 +25,7 @@ const GalleryMosaic = (props) => {
     return (
         <>
             <Container fluid>
-                <Row className="g-4">
+                <Row className="g-2 g-sm-4">
                     {galleriesComp}
                 </Row>
             </Container>

@@ -1,5 +1,11 @@
+/* !important: each page loads Bootstrap after this file, and its own body
+   rule would win otherwise. */
 body{
   background: white!important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Helvetica Neue', sans-serif!important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Design tokens Ponthé — validés sur le canvas Superdesign (Affiche arrondie / Hero osé) */
@@ -11,51 +17,6 @@ body{
   --ponthe-gray-border: #cfcfcf;
   --ponthe-radius-banner: 32px;
   --ponthe-radius-card: 16px;
-}
-
-.no-padding{
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.img-foreground{
-  width: 100%;
-  height: 100%;
-  z-index:90;
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.img-foreground:hover{
-  box-shadow: 0px 0px 7px 0px rgba(0,0,0,0.5);
-}
-
-.img-darker-foreground{
-  width: 100%;
-  height: 100%;
-  z-index:90;
-  color: rgb(185, 185, 185);
-  position: relative;
-}
-
-.img-darker-foreground:hover{
-  background-color: transparent;
-  color: rgb(255, 255, 255);
-}
-
-.img-test{
-  position: absolute;
-}
-
-.centered {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.vignette-text{
-  color: white;
 }
 
 .c-nav{
@@ -94,7 +55,6 @@ body{
   height: 170px;
   object-fit: cover;
 }
-
 
 /* Vue dézoomée gestion : miniatures plus petites pour voir plus de photos */
 .gallery-sticker.compact {
@@ -140,12 +100,6 @@ body{
     display: block;
     height: auto;
     aspect-ratio: 4 / 3;
-  }
-
-  .img-legend-text{
-    padding: 0 6px;
-    font-size: 0.95rem;
-    overflow-wrap: anywhere;
   }
 }
 
@@ -295,38 +249,6 @@ body{
   position: relative;
 }
 
-.img-legend{
-  position: absolute;
-  top:0px;
-  width: 100%;
-  height: 100%;
-  transition-duration: 0.5s;
-  transition-property: background-color;
-  color:white;
-}
-
-.img-legend:hover{
-  color:var(--ponthe-yellow);
-}
-
-.img-legend-text{
-  position: absolute;
-  text-align: center;
-  text-transform: uppercase;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 100%;
-  transition-duration: 0.5s;
-  transition-property: all;
-  text-shadow: 2px 2px 4px #0202021f;
-}
-
-.zoomer:hover{
-  -ms-transform: scale(1.5); /* IE 9 */
-  -webkit-transform: scale(1.5); /* Safari 3-8 */
-  transform: scale(1.5);
-  }
-
 .add-icon{
   height: 170px;
   cursor: pointer;
@@ -407,79 +329,6 @@ body{
   }
 }
 
-.big-button{
-  width:max-content;
-  max-width: calc(100% - 32px);
-  margin-left:auto;
-  margin-right: auto;
-  color:rgb(182, 182, 182);
-  text-transform: uppercase;
-  padding: 15px;
-  font-weight: bold;
-  font-size: 30px;
-  text-decoration: none;
-  text-align: center;
-  display: block;
-  transition: all 0.5s;
-  border-radius: 50px;
-  border-color: rgb(182, 182, 182);
-  border-width: 2px;
-  border-style: solid;
-}
-
-.big-button:focus,
-.big-button:hover{
-  color:var(--ponthe-yellow);
-  border-color: var(--ponthe-yellow);
-}
-
-.ytb-btn{
-  margin-top: 20px;
-}
-
-.ytb-btn:hover,
-.ytb-btn:focus{
-  color:rgb(253, 99, 99);
-  border-color: rgb(253, 99, 99);
-}
-.img-team{
-  width:100%;
-  height:100%;
-  object-fit: cover;
-}
-
-.team-down{
-  width:max-content;
-  margin-top: 60px;
-  margin-left:auto;
-  margin-right: auto;
-  color:rgb(182, 182, 182);
-  text-transform: uppercase;
-  padding: 15px;
-  font-weight: bold;
-  font-size: 30px;
-  text-decoration: none;
-  text-align: center;
-  display: block;
-  transition: all 0.5s;
-  cursor: pointer;
-}
-
-.main-intro-div{
-  margin-top: 100px;
-}
-
-@media screen and (max-width: 575px) {
-  .big-button,
-  .team-down{
-    font-size: 20px;
-  }
-
-  .main-intro-div{
-    margin-top: 50px;
-  }
-}
-
 .img-modal{
     position: absolute;
     max-width: 85%;
@@ -495,14 +344,6 @@ body{
     max-width: 100%;
     max-height: 80%;
   }
-}
-
-/*HOME PAGE*/
-.team-desc{
-  border: 1px solid #cfcfcf;
-  height: 100%;
-  padding: 20px;
-
 }
 
 /*LOGIN PAGE*/
@@ -524,7 +365,6 @@ body{
   padding-top: 50px;
   padding-bottom: 50px;
 }
-
 
 .login-input {
   /* Sizing */
@@ -569,7 +409,6 @@ body{
   transition: all 0.2s ease;
   text-underline-offset: 3px;
 }
-
 
 .login-link:hover{
   color:#8193F2;
@@ -622,10 +461,14 @@ body{
 
 /* Bouton « Sélectionner » du header de la page galerie :
    grand, posé aux deux-tiers entre le titre (centré) et le bord droit. */
-.select-toggle-icon{
+/* Two classes, to win over the size and display MUI gives its icons with a
+   single one: with `.select-toggle-icon` alone the icon stayed at 24px. */
+.introductive-content .select-toggle-icon{
   position: absolute;
   top: 36px;
-  left: 83%;
+  /* The title takes the middle 60%: at its real size the button, centred on
+     83%, bit into that. */
+  left: 86%;
   transform: translateX(-50%);
   cursor: pointer;
   color: var(--ponthe-blue);
@@ -633,17 +476,22 @@ body{
   transition: color 0.2s ease;
 }
 
-.select-toggle-icon:hover{
+.introductive-content .select-toggle-icon:hover{
   color: var(--ponthe-blue-dark);
 }
 
 @media screen and (max-width: 575px) {
-  .select-toggle-icon{
+  .introductive-content .select-toggle-icon{
     position: static;
     transform: none;
     display: block;
-    margin: 12px auto 0;
-    font-size: 2.5rem;
+    margin: 0 auto 16px;
+    font-size: 2.75rem;
+  }
+
+  /* The button sits under the title: no need for the room kept above it. */
+  .gallery-title{
+    margin-bottom: 16px;
   }
 }
 
@@ -788,6 +636,21 @@ body{
 
   .year-pills{
     padding-bottom: 0;
+  }
+
+  /* Two cards per row: the picture sets the height, the title gets smaller. */
+  .gallery-image-container{
+    height: auto;
+  }
+
+  .gallery-card-affiche{
+    border-width: 3px;
+  }
+
+  .gallery-title-label{
+    padding: 8px 10px 6px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
   }
 }
 
