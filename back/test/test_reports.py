@@ -239,3 +239,33 @@ class ReportsListApiTest(TestCase):
             self.client, "/api/gallery/reports/", {"slug": "nulle-part"}
         )
         self.assertEqual(response.status_code, 404)
+
+    def dismiss(self, report_id):
+        return post_json(
+            self.client, "/api/gallery/reports/dismiss/", {"id": report_id}
+        )
+
+    def test_only_a_manager_can_dismiss_a_report(self):
+        self.assertEqual(self.dismiss(self.report_1.pk).status_code, 403)
+        self.client.force_login(self.student)
+        self.assertEqual(self.dismiss(self.report_1.pk).status_code, 403)
+        self.assertEqual(Report.objects.count(), 3)
+
+    def test_a_manager_dismisses_one_report_and_the_picture_stays(self):
+        self.client.force_login(self.manager)
+        response = self.dismiss(self.report_1.pk)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            set(Report.objects.values_list("pk", flat=True)),
+            {self.report_2.pk, self.report_other.pk},
+        )
+        self.assertTrue(File.objects.filter(pk=self.file.pk).exists())
+
+    def test_dismissing_an_unknown_report(self):
+        self.client.force_login(self.manager)
+        self.assertEqual(self.dismiss(999999).status_code, 404)
+        self.assertEqual(self.dismiss("1; drop").status_code, 400)
+        self.assertEqual(self.dismiss(None).status_code, 400)
+        self.assertEqual(self.dismiss(True).status_code, 400)
+        self.assertEqual(Report.objects.count(), 3)

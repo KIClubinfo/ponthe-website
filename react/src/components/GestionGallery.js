@@ -337,6 +337,32 @@ export default function Gallery({props}){
               }
           );
     }
+    // A report has been dealt with, or was groundless: take it off the list.
+    // The picture leaves the "reported" filter once its last report is gone.
+    const dismissReport = (reportId) => {
+      const dismissOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': Cookies.get('csrftoken') },
+        body: JSON.stringify({ id: reportId })
+      };
+      fetch('/api/gallery/reports/dismiss/', dismissOptions)
+            .then(res => {
+              if (!res.ok) {
+                alert("Impossible de classer ce signalement.")
+                return
+              }
+              const remaining = reports.filter(r => r.id !== reportId)
+              setReports(remaining)
+              setReportedNames(new Set(remaining.map(r => r.file_full_name)))
+            })
+            .catch((error) => {
+              console.log(error)
+              alert("Impossible de classer ce signalement.")
+            });
+    }
+
 
     const changeView = (view) => {
       const visibilityOptions = {
@@ -544,7 +570,7 @@ export default function Gallery({props}){
             <div ref={ref} className='add-modal-content'>
               <span className='close-white-modal' onClick={() => setReports(null)}>&times;</span>
               <h3>Signalements</h3>
-              <ReportList reports={reports}/>
+              <ReportList reports={reports} onDismiss={dismissReport}/>
             </div>
           </div>
           )

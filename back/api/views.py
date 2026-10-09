@@ -462,3 +462,20 @@ def gallery_reports(request):
         .order_by("-created_at", "-pk")
     )
     return Response(ReportSerializer(reports, many=True).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsManager])
+def dismiss_report(request):
+    """A manager has dealt with a report, or found it groundless."""
+    report_id = request.data.get("id")
+    if not isinstance(report_id, int) or isinstance(report_id, bool):
+        return Response(
+            {"status": "error", "message": "Signalement inconnu."}, status=400
+        )
+    deleted, _ = Report.objects.filter(pk=report_id).delete()
+    if not deleted:
+        return Response(
+            {"status": "error", "message": "Signalement inconnu."}, status=404
+        )
+    return Response({"status": "ok"})

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import ReportList from './ReportList';
 
@@ -38,5 +38,19 @@ describe('ReportList', () => {
     test('shows a friendly empty state', () => {
         render(<ReportList reports={[]} />);
         expect(screen.getByText('Aucun signalement sur cette galerie.')).toBeInTheDocument();
+    });
+
+    test('each report can be dismissed', () => {
+        const onDismiss = jest.fn();
+        render(<ReportList reports={REPORTS} onDismiss={onDismiss} />);
+        const buttons = screen.getAllByRole('button', { name: 'Classer ce signalement' });
+        expect(buttons).toHaveLength(2);
+        fireEvent.click(buttons[1]);
+        expect(onDismiss).toHaveBeenCalledWith(2);
+    });
+
+    test('no dismiss button when the list is read-only', () => {
+        render(<ReportList reports={REPORTS} />);
+        expect(screen.queryByRole('button', { name: 'Classer ce signalement' })).not.toBeInTheDocument();
     });
 });

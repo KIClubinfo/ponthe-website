@@ -1,4 +1,4 @@
-from api.models import File, Gallery, Promo, Year
+from api.models import File, Gallery, Promo, Report, Year
 from django.contrib import admin
 
 
@@ -29,8 +29,15 @@ class PromoAdmin(admin.ModelAdmin):
     list_display = ("name", "first_year")
 
 
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("file", "reporter", "category", "message", "created_at")
+    list_filter = ("category",)
+    ordering = ("-created_at",)
+
+
 # Register your models here.
 admin.site.register(Year, YearAdmin)
 admin.site.register(Promo, PromoAdmin)
 admin.site.register(Gallery, GalleryAdmin)
 admin.site.register(File, FileAdmin)
+admin.site.register(Report, ReportAdmin)

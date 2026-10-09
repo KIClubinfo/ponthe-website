@@ -1125,4 +1125,67 @@ describe('GestionGallery reports', () => {
         expect(screen.queryByRole('heading', { name: 'Signalements' })).not.toBeInTheDocument();
         expect(window.alert).toHaveBeenCalled();
     });
+
+    test('dismissing a report calls the API and takes it off the list', async () => {
+        window.fetch = jest.fn((url) => {
+            if (url === '/api/gallery/reports/dismiss/') {
+                return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'ok' }) });
+            }
+            return Promise.resolve({ ok: true, json: () => Promise.resolve(REPORTS) });
+        });
+        render(<GestionGallery />);
+        fireEvent.click(screen.getByTitle('Photos signalées'));
+        fireEvent.click(await screen.findByTitle('Détails des signalements'));
+        fireEvent.click(await screen.findByRole('button', { name: 'Classer ce signalement' }));
+
+        await waitFor(() =>
+            expect(
+                screen.getByText('Aucun signalement sur cette galerie.')
+            ).toBeInTheDocument()
+        );
+        const [, options] = window.fetch.mock.calls.find(
+            ([u]) => u === '/api/gallery/reports/dismiss/'
+        );
+        expect(JSON.parse(options.body)).toEqual({ id: 1 });
+    });
+
+    test('a refused dismissal keeps the report and says so', async () => {
+        window.fetch = jest.fn((url) => {
+            if (url === '/api/gallery/reports/dismiss/') {
+                return Promise.resolve({ ok: false, status: 403, json: () => Promise.resolve({}) });
+            }
+            return Promise.resolve({ ok: true, json: () => Promise.resolve(REPORTS) });
+        });
+        render(<GestionGallery />);
+        fireEvent.click(screen.getByTitle('Photos signalées'));
+        fireEvent.click(await screen.findByTitle('Détails des signalements'));
+        fireEvent.click(await screen.findByRole('button', { name: 'Classer ce signalement' }));
+
+        await waitFor(() => expect(window.alert).toHaveBeenCalled());
+        expect(screen.getByText('picture.jpg')).toBeInTheDocument();
+    });
+});
+
+describe('GestionGallery upload refused by the proxy', () => {
+    test('a 413 answer, which is not JSON, gets a message about the size', async () => {
+        window.gallery_slug = 'gallery';
+        window.fetch = jest.fn((url, options) => {
+            if (url === '/gestion/gallery/gallery' && options && options.body instanceof FormData) {
+                return Promise.resolve({
+                    ok: false,
+                    status: 413,
+                    json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+                });
+            }
+            return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+        });
+        const { container } = render(<GestionGallery />);
+        fireEvent.click(screen.getByTestId('AddCircleOutlineIcon'));
+        const input = container.querySelector('input[type="file"]');
+        const file = new File(['zip'], 'gala.zip', { type: 'application/zip' });
+        fireEvent.change(input, { target: { files: [file] } });
+        fireEvent.click(screen.getByText("Lancer l'envoi"));
+
+        expect(await screen.findByText(/taille maximale autorisée \(2 Go\)/)).toBeInTheDocument();
+    });
 });
