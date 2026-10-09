@@ -1,5 +1,5 @@
-import io
 import os
+import tempfile
 import zipfile
 
 import galerie.loader as loader
@@ -13,9 +13,10 @@ from api.serializers import (
     ReportSerializer,
     YearSerializer,
 )
+from django.conf import settings as django_settings
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import slugify
 from rest_framework import status
@@ -290,40 +291,71 @@ def delete_pic(request):
     file.delete()
     # TODO DELETE FILE CONCERNED
     return Response(FileSerializer(file).data)
+def selection_error(message, status=400):
+    return Response({"status": "error", "message": message}, status=status)
+
+
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def download_pics(request):
-    """Zip the selected pictures of a gallery, for anyone who can see them."""
+    """
+    Zip the selected pictures of a gallery, for anyone who can see them.
+
+    Anyone includes a visitor who is not logged in, on a public gallery: the
+    selection is capped in number and in weight, and the archive is written to
+    a temporary file and sent from there, so that no request can hold hundreds
+    of megabytes in the memory of a worker. Pictures are stored, not deflated:
+    a JPEG does not get any smaller.
+    """
     gallery = Gallery.objects.filter(slug=request.data.get("slug")).first()
     if gallery is None:
-        return Response(
-            {"status": "error", "message": "Cette galerie n'existe pas."}, status=404
-        )
+        return selection_error("Cette galerie n'existe pas.", 404)
     if not gallery.can_user_access(request.user):
         return Response(FORBIDDEN_GALLERY, status=403)
     names = request.data.get("file_full_names")
     if not isinstance(names, list) or len(names) == 0:
-        return Response(
-            {"status": "error", "message": "Aucune photo sélectionnée."}, status=400
+        return selection_error("Aucune photo sélectionnée.")
+    if not all(isinstance(name, str) for name in names):
+        return selection_error("Sélection invalide.")
+    if len(names) > django_settings.DOWNLOAD_MAX_PHOTOS:
+        return selection_error(
+            f"Sélection trop grande : {django_settings.DOWNLOAD_MAX_PHOTOS} photos "
+            "au maximum par téléchargement."
         )
-    files = File.objects.filter(gallery=gallery, file_full_name__in=names)
-    if not files.exists():
-        return Response(
-            {"status": "error", "message": "Aucune de ces photos n'existe."}, status=404
+
+    members = []
+    total = 0
+    for file in File.objects.filter(gallery=gallery, file_full_name__in=names):
+        # Rows are written from a folder listing, but the admin lets a name be
+        # typed in: one holding a path must not reach outside the gallery.
+        if os.path.basename(file.file_full_name) != file.file_full_name:
+            continue
+        path = loader.gallery_path(gallery.slug, "uploads", file.file_full_name)
+        if os.path.isfile(path):
+            members.append((file.file_full_name, path))
+            total += os.path.getsize(path)
+    if not members:
+        return selection_error("Aucune de ces photos n'existe.", 404)
+    if total > django_settings.DOWNLOAD_MAX_BYTES:
+        megabytes = django_settings.DOWNLOAD_MAX_BYTES // (1024 * 1024)
+        return selection_error(
+            f"Sélection trop lourde : {megabytes} Mo au maximum par téléchargement."
         )
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        for file in files:
-            path = loader.gallery_path(gallery.slug, "uploads", file.file_full_name)
-            if os.path.isfile(path):
-                archive.write(path, arcname=file.file_full_name)
-    response = HttpResponse(buffer.getvalue(), content_type="application/zip")
-    response["Content-Disposition"] = (
-        f'attachment; filename="{gallery.slug}-selection.zip"'
+
+    archive_file = tempfile.TemporaryFile()
+    with zipfile.ZipFile(archive_file, "w", zipfile.ZIP_STORED) as archive:
+        for name, path in members:
+            archive.write(path, arcname=name)
+    archive_file.seek(0)
+    # FileResponse reads the file piece by piece and closes it when done.
+    return FileResponse(
+        archive_file,
+        as_attachment=True,
+        filename=f"{gallery.slug}-selection.zip",
+        content_type="application/zip",
     )
-    return response
 
 
 @api_view(["POST"])

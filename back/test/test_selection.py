@@ -5,13 +5,18 @@ import zipfile
 
 from api.models import File, Gallery, Report, Year
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from galerie.loader import gallery_path
 
 from .test_api import post_json
 
 SLUG = "select-public"
 PRIVATE_SLUG = "select-private"
+
+
+def zip_of_response(response):
+    """The archive is streamed from a temporary file, not held in memory."""
+    return zipfile.ZipFile(io.BytesIO(b"".join(response.streaming_content)))
 
 
 class DownloadPicsTest(TestCase):
@@ -59,7 +64,7 @@ class DownloadPicsTest(TestCase):
         response = self.download()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/zip")
-        archive = zipfile.ZipFile(io.BytesIO(response.content))
+        archive = zip_of_response(response)
         self.assertEqual(sorted(archive.namelist()), ["other.jpg", "picture.jpg"])
 
     def test_unknown_gallery_returns_404(self):
@@ -77,14 +82,14 @@ class DownloadPicsTest(TestCase):
     def test_unknown_names_are_ignored(self):
         response = self.download(names=("picture.jpg", "ghost.jpg"))
         self.assertEqual(response.status_code, 200)
-        archive = zipfile.ZipFile(io.BytesIO(response.content))
+        archive = zip_of_response(response)
         self.assertEqual(archive.namelist(), ["picture.jpg"])
 
     def test_missing_disk_file_is_omitted_from_zip(self):
         os.remove(gallery_path(SLUG, "uploads", "other.jpg"))
         response = self.download()
         self.assertEqual(response.status_code, 200)
-        archive = zipfile.ZipFile(io.BytesIO(response.content))
+        archive = zip_of_response(response)
         self.assertEqual(archive.namelist(), ["picture.jpg"])
 
     def test_names_not_a_list_returns_400(self):
@@ -94,6 +99,49 @@ class DownloadPicsTest(TestCase):
             {"slug": SLUG, "file_full_names": "picture.jpg"},
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_a_name_holding_a_path_is_left_out(self):
+        # Cannot come from an import; can be typed in the admin.
+        File.objects.create(
+            file_full_name="../../picture.jpg",
+            link=f"/media/{SLUG}",
+            gallery=self.gallery,
+        )
+        response = self.download(names=("picture.jpg", "../../picture.jpg"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(zip_of_response(response).namelist(), ["picture.jpg"])
+
+    def test_names_that_are_not_strings_return_400(self):
+        response = post_json(
+            self.client,
+            "/api/gallery/pics/download/",
+            {"slug": SLUG, "file_full_names": ["picture.jpg", {"a": 1}, ["x"]]},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_pictures_are_stored_with_their_exact_content(self):
+        response = self.download()
+        archive = zip_of_response(response)
+        self.assertEqual(archive.read("picture.jpg"), b"fake image bytes")
+        self.assertEqual(
+            {info.compress_type for info in archive.infolist()}, {zipfile.ZIP_STORED}
+        )
+        self.assertIn("select-public-selection.zip", response["Content-Disposition"])
+
+    @override_settings(DOWNLOAD_MAX_PHOTOS=2)
+    def test_a_selection_cannot_exceed_the_number_of_pictures_allowed(self):
+        self.assertEqual(self.download().status_code, 200)
+        response = self.download(names=("picture.jpg", "other.jpg", "untouched.jpg"))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("2 photos", response.data["message"])
+
+    @override_settings(DOWNLOAD_MAX_BYTES=20)
+    def test_a_selection_cannot_exceed_the_weight_allowed(self):
+        # Each fake picture weighs 16 bytes.
+        self.assertEqual(self.download(names=("picture.jpg",)).status_code, 200)
+        response = self.download()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("trop lourde", response.data["message"])
 
 
 class DownloadPicsAccessTest(TestCase):

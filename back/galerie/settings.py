@@ -230,6 +230,11 @@ LOGIN_FAILURE_WINDOW = 15 * 60
 
 TEST_RUNNER = "galerie.test_runner.TempMediaRunner"
 
+# Zip of a selection of pictures: what one request may ask for. Any visitor of
+# a public gallery can ask.
+DOWNLOAD_MAX_PHOTOS = 100
+DOWNLOAD_MAX_BYTES = 500 * 1024 * 1024
+
 # Celery settings
 CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0"
 CELERY_RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0"
