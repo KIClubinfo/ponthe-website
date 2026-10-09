@@ -1,3 +1,4 @@
+import logging
 import zipfile
 
 from api.models import Gallery
@@ -8,7 +9,12 @@ from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from galerie.loader import load_zip_into_gallery
 
-MAX_UPLOAD_SIZE = 500 * 1024 * 1024  # 500 Mo
+logger = logging.getLogger(__name__)
+
+# Same limit as nginx (client_max_body_size 2G), which refuses anything bigger
+# before it gets here. A lower one would turn away real events: 23 galleries
+# out of 196 weigh more than 500 MB.
+MAX_UPLOAD_SIZE = 2 * 1024 * 1024 * 1024
 
 
 @user_passes_test(is_manager)
@@ -48,7 +54,7 @@ def gallery_view(request, slug=""):
             return _upload_error(
                 wants_json,
                 f"Le fichier dépasse la taille maximale autorisée "
-                f"({MAX_UPLOAD_SIZE // (1024 * 1024)} Mo).",
+                f"({MAX_UPLOAD_SIZE // (1024 * 1024 * 1024)} Go).",
             )
 
         fs = FileSystemStorage()
@@ -64,7 +70,9 @@ def gallery_view(request, slug=""):
             )
         except Exception:
             # Unexpected error (disk full, Celery broker, ...): keep the
-            # JSON contract for AJAX requests.
+            # JSON contract for AJAX requests, and keep a trace. Answering
+            # here means Django never sees the exception, so never logs it.
+            logger.exception("Import of %s into gallery %s failed", file.name, slug)
             if wants_json:
                 return JsonResponse(
                     {

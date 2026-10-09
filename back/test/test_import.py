@@ -241,11 +241,14 @@ class UploadErrorMessagesTest(UploadTestCase):
     def test_ajax_unexpected_error_returns_json_500(self):
         """Une erreur inattendue garde le contrat JSON pour une requête AJAX."""
         archive = zip_of({"a.jpg": jpeg()})
+        # Answering in JSON hides the exception from Django: it has to be
+        # logged here, or nothing tells why an import failed.
         with mock.patch(
             "gestion.views.load_zip_into_gallery", side_effect=OSError("disk full")
-        ):
+        ), self.assertLogs("gestion.views", level="ERROR") as logs:
             response, thumbnails, load = self.upload_ajax("photos.zip", archive)
 
+        self.assertIn("disk full", logs.output[0])
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response["Content-Type"], "application/json")
         data = response.json()

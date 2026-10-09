@@ -106,7 +106,10 @@ export default function Gallery({props}){
           // Réponse non JSON (page d'erreur d'un proxy, ...) : data reste vide
         }
 
-        if (!response.ok || data.status === 'error') {
+        if (response.status === 413) {
+          // Refused by nginx before it reaches the application
+          setUploadError('Le fichier dépasse la taille maximale autorisée (2 Go).');
+        } else if (!response.ok || data.status === 'error') {
           setUploadError(data.message || 'Une erreur est survenue lors de l\'envoi.');
         } else {
           // Succès : fermer le modal et recharger la page
