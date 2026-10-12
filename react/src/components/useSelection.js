@@ -26,7 +26,9 @@ export default function useSelection(slug) {
     });
   };
 
-  //Download the selection as a single zip built by the backend
+  //Download the selection as a single zip: the backend checks it and answers
+  //with a link, and the browser downloads from that link by itself. It shows
+  //the progress, and the archive never has to fit in the memory of the page.
   const downloadSelected = async () => {
     if (selected.size === 0) return;
     const downloadOptions = {
@@ -38,27 +40,24 @@ export default function useSelection(slug) {
     };
     try {
       const response = await fetch('/api/gallery/pics/download/', downloadOptions);
-      if (!response.ok) {
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // Not JSON (error page of a proxy, ...): the generic message below
+      }
+      if (!response.ok || !data || !data.url) {
         // The backend says why: too many pictures, too heavy, gone...
-        let message = 'Impossible de télécharger les photos sélectionnées.';
-        try {
-          const data = await response.json();
-          if (data && data.message) message = data.message;
-        } catch (parseError) {
-          // Not JSON (error page of a proxy, ...): keep the generic message
-        }
-        alert(message);
+        alert((data && data.message) || 'Impossible de télécharger les photos sélectionnées.');
         return;
       }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // `download` keeps the page in place whatever the link answers.
       const a = document.createElement('a');
-      a.href = url;
-      a.download = slug + '-selection.zip';
+      a.href = data.url;
+      a.download = '';
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
     } catch (err) {
       console.log(err);
       alert('Erreur réseau : impossible de contacter le serveur.');

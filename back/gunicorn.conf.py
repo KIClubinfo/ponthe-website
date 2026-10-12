@@ -8,7 +8,10 @@ workers = os.environ.get(
 )
 
 max_requests = 400
-timeout = 120
+# The longest requests read or write a whole gallery: the zip of a selection
+# (up to DOWNLOAD_MAX_BYTES, at 40 MB/s or so when the disk is cold and less
+# when several are read at once) and the extraction of an uploaded zip.
+timeout = 300
 keep_alive = 2
 
 preload = True

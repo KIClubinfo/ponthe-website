@@ -42,12 +42,14 @@ const mockGalleryResponse = {
   name: 'Ma Galerie Test',
 };
 
+const DOWNLOAD_LINK = '/api/gallery/pics/download/some-token/';
+
 function mockFetch(withDownload = false) {
   global.fetch = jest.fn((url) => {
     if (withDownload && url.includes('/api/gallery/pics/download/')) {
       return Promise.resolve({
         ok: true,
-        blob: () => Promise.resolve(new Blob(['zip'])),
+        json: () => Promise.resolve({ status: 'ok', url: DOWNLOAD_LINK }),
       });
     }
     if (url.includes('/api/gallery/pics/')) {
@@ -57,14 +59,25 @@ function mockFetch(withDownload = false) {
   });
 }
 
+// The browser downloads by following a link: record the links it is sent to.
+function recordFollowedLinks() {
+  const followed = [];
+  jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+    followed.push({ href: this.getAttribute('href'), download: this.hasAttribute('download') });
+  });
+  return followed;
+}
+
 describe('Gallery selection mode', () => {
+  let followedLinks;
+
   beforeEach(() => {
     mockFetch();
-    URL.createObjectURL = jest.fn(() => 'blob:fake');
-    URL.revokeObjectURL = jest.fn();
+    followedLinks = recordFollowedLinks();
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -117,6 +130,10 @@ describe('Gallery selection mode', () => {
       slug: 'test-gallery',
       file_full_names: ['photo1.jpg', 'photo2.jpg'],
     });
+    // The archive itself is left to the browser, which follows the link.
+    await waitFor(() =>
+      expect(followedLinks).toEqual([{ href: DOWNLOAD_LINK, download: true }])
+    );
   });
 
   test('a refused download shows the reason given by the server', async () => {
@@ -129,7 +146,7 @@ describe('Gallery selection mode', () => {
           status: 400,
           json: () => Promise.resolve({
             status: 'error',
-            message: 'Sélection trop grande : 100 photos au maximum par téléchargement.',
+            message: 'Sélection trop lourde : 4 Go au maximum par téléchargement.',
           }),
         });
       }
@@ -146,10 +163,41 @@ describe('Gallery selection mode', () => {
 
     await waitFor(() =>
       expect(window.alert).toHaveBeenCalledWith(
-        'Sélection trop grande : 100 photos au maximum par téléchargement.'
+        'Sélection trop lourde : 4 Go au maximum par téléchargement.'
       )
     );
-    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(followedLinks).toEqual([]);
+  });
+
+  test('an answer that is not from the backend shows a generic message', async () => {
+    mockFetch();
+    const baseFetch = global.fetch;
+    global.fetch = jest.fn((url, options) => {
+      if (url.includes('/api/gallery/pics/download/')) {
+        // Error page of a proxy: not JSON
+        return Promise.resolve({
+          ok: false,
+          status: 502,
+          json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+        });
+      }
+      return baseFetch(url, options);
+    });
+    window.alert = jest.fn();
+    render(<Gallery />);
+    await waitFor(() => expect(screen.getByText('Ma Galerie Test')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('ChecklistIcon'));
+    mosaicProps.onToggleSelect('photo1.jpg');
+    await waitFor(() => expect(screen.getByText('1 photo(s) sélectionnée(s)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Télécharger la sélection'));
+
+    await waitFor(() =>
+      expect(window.alert).toHaveBeenCalledWith(
+        'Impossible de télécharger les photos sélectionnées.'
+      )
+    );
+    expect(followedLinks).toEqual([]);
   });
 
   test('leaving selection mode clears the selection', async () => {

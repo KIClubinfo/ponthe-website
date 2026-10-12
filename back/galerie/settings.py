@@ -237,10 +237,20 @@ LOGIN_FAILURE_WINDOW = 15 * 60
 
 TEST_RUNNER = "galerie.test_runner.TempMediaRunner"
 
-# Zip of a selection of pictures: what one request may ask for. Any visitor of
-# a public gallery can ask.
-DOWNLOAD_MAX_PHOTOS = 100
-DOWNLOAD_MAX_BYTES = 500 * 1024 * 1024
+# Zip of a selection of pictures. Any visitor of a public gallery can ask, so
+# there is a limit, but well above a whole gallery: the largest one holds
+# 1,639 pictures and the heaviest weighs 1.3 GB. nginx has to be able to take
+# the heaviest archive whole (proxy_max_temp_file_size in nginx.conf).
+DOWNLOAD_MAX_PHOTOS = 5000
+DOWNLOAD_MAX_BYTES = 4 * 1024**3
+# How long the link to an archive can be followed once handed out.
+DOWNLOAD_LINK_SECONDS = 10 * 60
+# Reading a gallery from the disk keeps a worker busy for a minute or more.
+# From this weight on, only a few archives are written at a time. A place is
+# held for as long as gunicorn lets a request last (gunicorn.conf.py) at most.
+DOWNLOAD_HEAVY_BYTES = 256 * 1024**2
+DOWNLOAD_HEAVY_AT_ONCE = 3
+DOWNLOAD_SLOT_SECONDS = 300
 
 # Celery settings
 CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0"

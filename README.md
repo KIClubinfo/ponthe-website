@@ -90,6 +90,18 @@ Afin de faciliter le chargement de nouvelles galeries, le back contient aussi un
 
 Supprimer une photo (ou une galerie) retire aussi ses fichiers du site : la miniature est effacée et l'original est déplacé dans ```back/media/.corbeille/<slug>/uploads/```. Ce dossier n'est servi par aucune route et n'est jamais vidé automatiquement : pour restaurer une photo, remettre son fichier dans le dossier ```uploads/``` de la galerie puis relancer l'import ; pour libérer de la place, vider le dossier à la main.
 
+#### Téléchargement d'une sélection de photos
+
+Le téléchargement se fait en deux temps. La page envoie la sélection à ```/api/gallery/pics/download/```, qui la vérifie (droit de voir la galerie, nombre et poids) et répond par un lien valable dix minutes. Le navigateur suit ce lien et télécharge lui-même l'archive : il affiche l'avancement, et le zip n'a jamais à tenir dans la mémoire de la page, ce qui compte sur téléphone.
+
+L'archive n'est ni préparée sur le disque ni construite en mémoire : le backend l'écrit au fil de la lecture des photos (```back/api/archives.py```), et nginx la reçoit en entier dans un fichier temporaire d'où le visiteur la récupère à son rythme. Trois réglages vont ensemble :
+
+- ```DOWNLOAD_MAX_PHOTOS``` et ```DOWNLOAD_MAX_BYTES``` (```back/galerie/settings.py```) : 5 000 photos et 4 Go par téléchargement, bien au-dessus d'une galerie entière ;
+- ```proxy_max_temp_file_size``` (```nginx/nginx.conf```) : doit rester au-dessus de ```DOWNLOAD_MAX_BYTES```, sans quoi une connexion lente retient un worker jusqu'à ce que gunicorn le tue et l'archive arrive tronquée ;
+- ```timeout``` (```back/gunicorn.conf.py```) : la lecture d'une galerie entière sur un disque froid prend de l'ordre d'une minute par 2 Go, davantage si plusieurs sont lues en même temps.
+
+Pour que les pages restent servies pendant ce temps, trois archives de plus de 256 Mo au maximum sont écrites à la fois (```DOWNLOAD_HEAVY_AT_ONCE```) ; les suivantes reçoivent un message qui invite à réessayer. Les liens et ces places sont tenus dans le cache Redis.
+
 ### Frontend
 
 Le frontend du site est développé en JavaScript avec le framework React. Les fichiers JS sont, lors du lancement du container webinstaller, ajoutés dans des fichiers "bundles" qui sont placés dans le dossier ```/src/galerie/static/react/``` du back qui pourra ensuite les intégrer dans les templates html. Ces bundles contiennent l'ensemble du contenu React.

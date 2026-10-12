@@ -684,15 +684,21 @@ describe('GestionGallery', () => {
   });
 
   test('downloading the selection calls the download API with the selected names', async () => {
-    URL.createObjectURL = jest.fn(() => 'blob:fake');
-    URL.revokeObjectURL = jest.fn();
+    // The browser downloads by following the link the API answers with.
+    const followedLinks = [];
+    const click = jest
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function () {
+        followedLinks.push(this.getAttribute('href'));
+      });
 
-    // Le download doit réussir : fetch complet avec ok + blob (mockFetch par défaut ne le fournit pas)
+    // Le download doit réussir : fetch complet avec ok + lien (mockFetch par défaut ne le fournit pas)
     global.fetch = jest.fn((url) => {
       if (url === '/api/gallery/pics/download/') {
         return Promise.resolve({
           ok: true,
-          blob: () => Promise.resolve(new Blob(['zip'])),
+          json: () =>
+            Promise.resolve({ status: 'ok', url: '/api/gallery/pics/download/some-token/' }),
         });
       }
       if (url.includes('/api/gallery/pics/')) {
@@ -731,6 +737,10 @@ describe('GestionGallery', () => {
         file_full_names: ['photo1.jpg', 'photo2.jpg'],
       });
     });
+    await waitFor(() => {
+      expect(followedLinks).toEqual(['/api/gallery/pics/download/some-token/']);
+    });
+    click.mockRestore();
   });
 
   test('deleting the selection asks for confirmation and calls the delete API', async () => {

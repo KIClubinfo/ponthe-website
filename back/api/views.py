@@ -1,9 +1,10 @@
+import logging
 import os
-import tempfile
-import zipfile
+import secrets
 
 import galerie.loader as loader
 import galerie.settings as settings
+from api import archives
 from api.models import File, Gallery, Report, Year
 from api.permissions import IsManager, is_manager
 from api.serializers import (
@@ -14,15 +15,20 @@ from api.serializers import (
     YearSerializer,
 )
 from django.conf import settings as django_settings
+from django.core.cache import cache
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import FileResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import slugify
+from django.urls import reverse
+from django.utils.http import content_disposition_header
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
@@ -295,17 +301,85 @@ def selection_error(message, status=400):
     return Response({"status": "error", "message": message}, status=status)
 
 
+def download_refused(message, status):
+    # Read by someone whose browser followed a download link, not by the page.
+    return HttpResponse(
+        message, status=status, content_type="text/plain; charset=utf-8"
+    )
+
+
+DOWNLOAD_KEY = "download:"
+DOWNLOADS_BUSY = (
+    "Trop de gros téléchargements sont en cours. Réessayez dans une minute, "
+    "ou téléchargez moins de photos à la fois."
+)
+DOWNLOADS_DOWN = "Le téléchargement est indisponible pour le moment."
+
+
+def weight_in_words(size):
+    gigabytes = size / 1024**3
+    if gigabytes >= 1:
+        return f"{gigabytes:g} Go".replace(".", ",")
+    return f"{size // 1024**2} Mo"
+
+
+def pictures_on_disk(gallery, files):
+    """The rows among `files` whose picture can go into an archive, with its path."""
+    pictures = []
+    for file in files:
+        # Rows are written from a folder listing, but the admin lets a name be
+        # typed in: one holding a path must not reach outside the gallery.
+        if os.path.basename(file.file_full_name) != file.file_full_name:
+            continue
+        path = loader.gallery_path(gallery.slug, "uploads", file.file_full_name)
+        if os.path.isfile(path):
+            pictures.append((file, path))
+    return pictures
+
+
+def heavy_slots():
+    return [
+        f"download-slot:{number}"
+        for number in range(django_settings.DOWNLOAD_HEAVY_AT_ONCE)
+    ]
+
+
+def take_heavy_slot():
+    for slot in heavy_slots():
+        # Expires by itself: a worker that gets killed cannot give it back.
+        if cache.add(slot, 1, django_settings.DOWNLOAD_SLOT_SECONDS):
+            return slot
+    return None
+
+
+class ArchiveResponse(StreamingHttpResponse):
+    """Gives its place among the heavy downloads back, sent or given up on."""
+
+    slot = None
+
+    def close(self):
+        try:
+            super().close()
+        finally:
+            if self.slot:
+                try:
+                    cache.delete(self.slot)
+                except Exception:
+                    logger.exception("Download slot not freed: cache unreachable")
+                self.slot = None
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def download_pics(request):
     """
-    Zip the selected pictures of a gallery, for anyone who can see them.
+    Check a selection of pictures and hand out the link to its zip.
 
-    Anyone includes a visitor who is not logged in, on a public gallery: the
-    selection is capped in number and in weight, and the archive is written to
-    a temporary file and sent from there, so that no request can hold hundreds
-    of megabytes in the memory of a worker. Pictures are stored, not deflated:
-    a JPEG does not get any smaller.
+    Anyone who can see the gallery may ask, a visitor who is not logged in
+    included when it is public: the selection is capped in number and in
+    weight. The answer is a link rather than the archive itself, so that the
+    browser does the downloading: it shows how far along it is, and a phone
+    does not have to hold the archive in the memory of the page.
     """
     gallery = Gallery.objects.filter(slug=request.data.get("slug")).first()
     if gallery is None:
@@ -323,37 +397,91 @@ def download_pics(request):
             "au maximum par téléchargement."
         )
 
-    members = []
-    total = 0
-    for file in File.objects.filter(gallery=gallery, file_full_name__in=names):
-        # Rows are written from a folder listing, but the admin lets a name be
-        # typed in: one holding a path must not reach outside the gallery.
-        if os.path.basename(file.file_full_name) != file.file_full_name:
-            continue
-        path = loader.gallery_path(gallery.slug, "uploads", file.file_full_name)
-        if os.path.isfile(path):
-            members.append((file.file_full_name, path))
-            total += os.path.getsize(path)
-    if not members:
+    files = File.objects.filter(gallery=gallery, file_full_name__in=names)
+    pictures = pictures_on_disk(gallery, files)
+    if not pictures:
         return selection_error("Aucune de ces photos n'existe.", 404)
+    total = sum(os.path.getsize(path) for _, path in pictures)
     if total > django_settings.DOWNLOAD_MAX_BYTES:
-        megabytes = django_settings.DOWNLOAD_MAX_BYTES // (1024 * 1024)
+        limit = weight_in_words(django_settings.DOWNLOAD_MAX_BYTES)
         return selection_error(
-            f"Sélection trop lourde : {megabytes} Mo au maximum par téléchargement."
+            f"Sélection trop lourde : {limit} au maximum par téléchargement."
         )
 
-    archive_file = tempfile.TemporaryFile()
-    with zipfile.ZipFile(archive_file, "w", zipfile.ZIP_STORED) as archive:
-        for name, path in members:
-            archive.write(path, arcname=name)
-    archive_file.seek(0)
-    # FileResponse reads the file piece by piece and closes it when done.
-    return FileResponse(
-        archive_file,
-        as_attachment=True,
-        filename=f"{gallery.slug}-selection.zip",
-        content_type="application/zip",
+    token = secrets.token_urlsafe(24)
+    selection = {"slug": gallery.slug, "files": [file.pk for file, _ in pictures]}
+    try:
+        if total >= django_settings.DOWNLOAD_HEAVY_BYTES:
+            # Said here, where the page can show it, rather than by the link.
+            slots = heavy_slots()
+            if len(cache.get_many(slots)) >= len(slots):
+                return selection_error(DOWNLOADS_BUSY, 503)
+        cache.set(
+            DOWNLOAD_KEY + token, selection, django_settings.DOWNLOAD_LINK_SECONDS
+        )
+    except Exception:
+        logger.exception("Download link not handed out: cache unreachable")
+        return selection_error(DOWNLOADS_DOWN, 503)
+    return Response(
+        {
+            "status": "ok",
+            "url": reverse("download-archive", args=[token]),
+            "photos": len(pictures),
+            "bytes": total,
+        }
     )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def download_archive(request, token):
+    """
+    The zip a download link stands for, written as it is sent (api.archives).
+
+    The link is the permission: whoever holds it could see the gallery when it
+    was handed out, a few minutes ago at most. No session is asked for, since
+    a phone often passes a download on to an application that has none.
+
+    nginx takes the archive at the speed of the disk and lets the visitor
+    fetch it from there at their own pace (nginx.conf), so a worker is busy
+    for the reading only. That still lasts a while for a whole gallery: from
+    DOWNLOAD_HEAVY_BYTES on, only a few archives are written at a time, and
+    the other workers keep serving pages.
+    """
+    try:
+        selection = cache.get(DOWNLOAD_KEY + token)
+    except Exception:
+        logger.exception("Download link not read: cache unreachable")
+        return download_refused(DOWNLOADS_DOWN, 503)
+    if selection is None:
+        return download_refused(
+            "Ce lien de téléchargement a expiré : relancez le téléchargement "
+            "depuis la galerie.",
+            404,
+        )
+    gallery = Gallery.objects.filter(slug=selection["slug"]).first()
+    if gallery is None:
+        return download_refused("Cette galerie n'existe plus.", 404)
+    files = File.objects.filter(gallery=gallery, pk__in=selection["files"])
+    members = archives.members(
+        (file.file_full_name, path)
+        for file, path in pictures_on_disk(gallery, files.order_by("file_full_name"))
+    )
+    if not members:
+        return download_refused("Ces photos n'existent plus.", 404)
+
+    slot = None
+    if archives.weight(members) >= django_settings.DOWNLOAD_HEAVY_BYTES:
+        slot = take_heavy_slot()
+        if slot is None:
+            return download_refused(DOWNLOADS_BUSY, 503)
+    response = ArchiveResponse(archives.write(members), content_type="application/zip")
+    response.slot = slot
+    response["Content-Length"] = archives.size(members)
+    response["Content-Disposition"] = content_disposition_header(
+        True, f"{gallery.slug}-selection.zip"
+    )
+    return response
 
 
 @api_view(["POST"])

@@ -2,24 +2,52 @@ import io
 import os
 import shutil
 import zipfile
+from unittest import mock
 
 from api.models import File, Gallery, Report, Year
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.core.signals import request_finished
+from django.db import close_old_connections
 from django.test import TestCase, override_settings
 from galerie import loader
 from galerie.loader import gallery_path
 
 from .test_api import post_json
+from .test_auth import LOCAL_CACHE
 
 SLUG = "select-public"
 PRIVATE_SLUG = "select-private"
 
 
-def zip_of_response(response):
-    """The archive is streamed from a temporary file, not held in memory."""
-    return zipfile.ZipFile(io.BytesIO(b"".join(response.streaming_content)))
+def follow(client, response):
+    """Follow the link the API answered with, as the browser does."""
+    return client.get(response.data["url"])
 
 
+def give_up(download):
+    """
+    What the server does when the visitor goes away: close without reading.
+
+    The test client only closes what was read to the end, and keeps Django
+    from dropping the connection of the test to the database while it does.
+    """
+    request_finished.disconnect(close_old_connections)
+    try:
+        download.close()
+    finally:
+        request_finished.connect(close_old_connections)
+
+
+def zip_of_response(client, response):
+    """The archive behind the link: sent in pieces, of the size announced."""
+    download = follow(client, response)
+    data = b"".join(download.streaming_content)
+    assert int(download["Content-Length"]) == len(data)
+    return zipfile.ZipFile(io.BytesIO(data))
+
+
+@override_settings(CACHES=LOCAL_CACHE)
 class DownloadPicsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -43,6 +71,7 @@ class DownloadPicsTest(TestCase):
         cls.manager = User.objects.create_user("manager", is_staff=True)
 
     def setUp(self):
+        cache.clear()
         # download_pics lit les fichiers sur le disque : on en pose des faux.
         os.makedirs(gallery_path(SLUG, "uploads"), exist_ok=True)
         for name in ("picture.jpg", "other.jpg", "untouched.jpg"):
@@ -61,12 +90,15 @@ class DownloadPicsTest(TestCase):
             {"slug": slug, "file_full_names": list(names)},
         )
 
-    def test_zip_contains_selected_pictures(self):
+    def test_the_answer_is_a_link_to_a_zip_of_the_selected_pictures(self):
         response = self.download()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/zip")
-        archive = zip_of_response(response)
-        self.assertEqual(sorted(archive.namelist()), ["other.jpg", "picture.jpg"])
+        self.assertEqual((response.data["photos"], response.data["bytes"]), (2, 32))
+        self.assertEqual(
+            follow(self.client, response)["Content-Type"], "application/zip"
+        )
+        archive = zip_of_response(self.client, response)
+        self.assertEqual(archive.namelist(), ["other.jpg", "picture.jpg"])
 
     def test_unknown_gallery_returns_404(self):
         response = self.download(slug="does-not-exist")
@@ -83,14 +115,14 @@ class DownloadPicsTest(TestCase):
     def test_unknown_names_are_ignored(self):
         response = self.download(names=("picture.jpg", "ghost.jpg"))
         self.assertEqual(response.status_code, 200)
-        archive = zip_of_response(response)
+        archive = zip_of_response(self.client, response)
         self.assertEqual(archive.namelist(), ["picture.jpg"])
 
     def test_missing_disk_file_is_omitted_from_zip(self):
         os.remove(gallery_path(SLUG, "uploads", "other.jpg"))
         response = self.download()
         self.assertEqual(response.status_code, 200)
-        archive = zip_of_response(response)
+        archive = zip_of_response(self.client, response)
         self.assertEqual(archive.namelist(), ["picture.jpg"])
 
     def test_names_not_a_list_returns_400(self):
@@ -110,7 +142,9 @@ class DownloadPicsTest(TestCase):
         )
         response = self.download(names=("picture.jpg", "../../picture.jpg"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(zip_of_response(response).namelist(), ["picture.jpg"])
+        self.assertEqual(
+            zip_of_response(self.client, response).namelist(), ["picture.jpg"]
+        )
 
     def test_names_that_are_not_strings_return_400(self):
         response = post_json(
@@ -122,12 +156,16 @@ class DownloadPicsTest(TestCase):
 
     def test_pictures_are_stored_with_their_exact_content(self):
         response = self.download()
-        archive = zip_of_response(response)
+        archive = zip_of_response(self.client, response)
         self.assertEqual(archive.read("picture.jpg"), b"fake image bytes")
         self.assertEqual(
             {info.compress_type for info in archive.infolist()}, {zipfile.ZIP_STORED}
         )
-        self.assertIn("select-public-selection.zip", response["Content-Disposition"])
+        self.assertIsNone(archive.testzip())
+        self.assertEqual(
+            follow(self.client, response)["Content-Disposition"],
+            'attachment; filename="select-public-selection.zip"',
+        )
 
     @override_settings(DOWNLOAD_MAX_PHOTOS=2)
     def test_a_selection_cannot_exceed_the_number_of_pictures_allowed(self):
@@ -144,7 +182,94 @@ class DownloadPicsTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("trop lourde", response.data["message"])
 
+    def test_the_default_limits_leave_room_for_a_whole_gallery(self):
+        from django.conf import settings
 
+        # The largest gallery holds 1,639 pictures, the heaviest weighs 1.3 GB.
+        self.assertGreaterEqual(settings.DOWNLOAD_MAX_PHOTOS, 2 * 1639)
+        self.assertGreaterEqual(settings.DOWNLOAD_MAX_BYTES, 2 * 1.4 * 1024**3)
+
+    def test_an_unknown_link_returns_404(self):
+        response = self.client.get("/api/gallery/pics/download/never-handed-out/")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("expiré", response.content.decode())
+
+    def test_a_link_stops_working_after_a_while(self):
+        response = self.download()
+        cache.clear()
+        self.assertEqual(follow(self.client, response).status_code, 404)
+
+    def test_a_link_can_be_followed_more_than_once(self):
+        # A phone may hand the download over to another application.
+        response = self.download()
+        for _ in range(2):
+            archive = zip_of_response(self.client, response)
+            self.assertEqual(archive.namelist(), ["other.jpg", "picture.jpg"])
+
+    def test_a_picture_deleted_meanwhile_is_left_out(self):
+        response = self.download()
+        File.objects.get(gallery=self.gallery, file_full_name="other.jpg").delete()
+        archive = zip_of_response(self.client, response)
+        self.assertEqual(archive.namelist(), ["picture.jpg"])
+
+        File.objects.filter(gallery=self.gallery).delete()
+        self.assertEqual(follow(self.client, response).status_code, 404)
+
+    def test_names_with_accents_and_spaces(self):
+        name = "été 100% ?.jpg"
+        File.objects.create(
+            file_full_name=name, link=f"/media/{SLUG}", gallery=self.gallery
+        )
+        with open(gallery_path(SLUG, "uploads", name), "wb") as f:
+            f.write(b"another fake image")
+        archive = zip_of_response(self.client, self.download(names=(name,)))
+        self.assertEqual(archive.read(name), b"another fake image")
+
+    @override_settings(DOWNLOAD_HEAVY_BYTES=20, DOWNLOAD_HEAVY_AT_ONCE=1)
+    def test_only_so_many_heavy_archives_are_written_at_a_time(self):
+        # Two pictures are heavy here (32 bytes), one is not (16).
+        heavy, other_heavy = self.download(), self.download()
+        light = self.download(names=("picture.jpg",))
+        being_sent = follow(self.client, heavy)
+        self.assertEqual(being_sent.status_code, 200)
+
+        refused = follow(self.client, other_heavy)
+        self.assertEqual(refused.status_code, 503)
+        self.assertIn("Réessayez", refused.content.decode())
+        # Asking for another one is refused where the page can say so.
+        response = self.download()
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("Réessayez", response.data["message"])
+        # Light selections are not concerned.
+        self.assertEqual(follow(self.client, light).status_code, 200)
+        self.assertEqual(self.download(names=("picture.jpg",)).status_code, 200)
+
+        # Once the first one is sent, its place is free again.
+        b"".join(being_sent.streaming_content)
+        self.assertEqual(self.download().status_code, 200)
+        archive = zip_of_response(self.client, other_heavy)
+        self.assertEqual(archive.namelist(), ["other.jpg", "picture.jpg"])
+
+    @override_settings(DOWNLOAD_HEAVY_BYTES=20, DOWNLOAD_HEAVY_AT_ONCE=1)
+    def test_a_download_given_up_on_frees_its_place(self):
+        response = self.download()
+        give_up(follow(self.client, response))
+        self.assertEqual(follow(self.client, response).status_code, 200)
+
+    def test_the_cache_being_down_is_said_and_logged(self):
+        response = self.download()
+        broken = mock.Mock()
+        broken.get.side_effect = broken.set.side_effect = ConnectionError
+        with mock.patch("api.views.cache", broken):
+            with self.assertLogs("api.views", level="ERROR"):
+                refused = self.download()
+            self.assertEqual(refused.status_code, 503)
+            self.assertIn("indisponible", refused.data["message"])
+            with self.assertLogs("api.views", level="ERROR"):
+                self.assertEqual(follow(self.client, response).status_code, 503)
+
+
+@override_settings(CACHES=LOCAL_CACHE)
 class DownloadPicsAccessTest(TestCase):
     """Une galerie privée ne se télécharge que si on peut la voir."""
 
@@ -191,6 +316,14 @@ class DownloadPicsAccessTest(TestCase):
 
     def test_manager_can_download(self):
         self.assertEqual(self.download(self.manager).status_code, 200)
+
+    def test_the_link_is_the_permission(self):
+        # Handed out to someone who may see the gallery, it needs no session:
+        # the application a phone passes the download on to has none.
+        response = self.download(self.manager)
+        self.client.logout()
+        archive = zip_of_response(self.client, response)
+        self.assertEqual(archive.namelist(), ["picture.jpg"])
 
 
 class DeletePicsTest(TestCase):
