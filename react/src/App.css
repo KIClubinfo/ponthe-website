@@ -344,14 +344,15 @@ body{
   object-position: center 35%;
 }
 
-/* A veil that only darkens where the text sits. */
+/* A veil that only darkens where the text sits, and ends on the colour of
+   the credits below: the picture fades into them. */
 .hero-section::after{
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   background: linear-gradient(180deg, rgba(31, 37, 71, 0.2) 0%, rgba(31, 37, 71, 0.05) 32%,
-    rgba(18, 22, 48, 0.55) 68%, rgba(18, 22, 48, 0.88) 100%);
+    rgba(18, 22, 47, 0.55) 66%, rgba(18, 22, 47, 0.9) 92%, #12162f 100%);
 }
 
 .hero-content{
@@ -607,179 +608,86 @@ body{
   color: white;
 }
 
-/* ===== The team ===== */
+/* ===== The team: end credits ===== */
 
+/* A photo and video club signs its year the way a film does. The colour is
+   the one the veil of the hero ends on, so that on a wide screen the picture
+   fades into the credits. */
 .team-section{
-  background: var(--ponthe-tint);
-  padding: 88px 24px 96px;
+  /* Laid over the last two pixels of the hero: where the two meet, rounding
+     left a pale line of the picture showing. */
+  position: relative;
+  box-shadow: 0 -2px 0 #12162f;
+  background: #12162f;
+  color: white;
+  padding: 104px 24px 88px;
   /* The navbar is stuck to the top on a wide screen: land below it. */
   scroll-margin-top: var(--ponthe-nav);
 }
 
 .team-section-inner{
-  max-width: 1040px;
+  max-width: 720px;
   margin: 0 auto;
-}
-
-.team-section-eyebrow{
-  margin: 0 0 10px;
-  color: var(--ponthe-muted);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-align: center;
-  text-transform: uppercase;
 }
 
 .team-section-title{
   margin: 0;
-  text-align: center;
-  color: var(--ponthe-blue-dark);
+  color: white;
   font-weight: 800;
-  font-size: clamp(30px, 4vw, 44px);
+  font-size: clamp(36px, 5.5vw, 60px);
+  line-height: 1;
   letter-spacing: -0.03em;
+  text-align: center;
 }
 
-/* The accent of the house, as a short rule under a title. */
-.team-section-title::after{
-  content: "";
-  display: block;
-  width: 44px;
-  height: 4px;
-  margin: 18px auto 0;
-  border-radius: 4px;
-  background: var(--ponthe-yellow);
+.team-section-title span{
+  color: var(--ponthe-yellow);
 }
 
-.team-group{
-  margin-top: 48px;
+.credits-group{
+  margin-top: 64px;
 }
 
-/* The name of a group, and a hairline running to the edge. */
-.team-group-title{
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0 0 16px;
-  color: var(--ponthe-muted);
+.credits-group-title{
+  margin: 0 0 20px;
+  color: var(--ponthe-yellow);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.26em;
+  text-align: center;
   text-transform: uppercase;
 }
 
-.team-group-title::after{
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--ponthe-line);
-}
-
-.team-people{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 12px;
+.credits-list{
   margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.team-person,
-.team-crew{
-  border-radius: var(--ponthe-radius);
-  background: white;
-  box-shadow: 0 1px 2px rgba(31, 37, 71, 0.05), 0 8px 20px -18px rgba(31, 37, 71, 0.35);
+/* The axis of the credits: roles end on it, names start from it. */
+.credits-line{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  align-items: baseline;
+  padding: 6px 0;
 }
 
-.team-person{
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-}
-
-.team-avatar{
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(129, 147, 242, 0.18);
-  color: var(--ponthe-blue-dark);
+.credits-line dt{
+  color: rgba(255, 255, 255, 0.6);
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 400;
+  text-align: right;
 }
 
-.team-person-text{
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.team-person-name{
-  color: var(--ponthe-ink);
-  font-weight: 600;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-
-.team-person-role{
-  margin-top: 2px;
-  color: var(--ponthe-muted);
-  font-size: 14px;
-}
-
-.team-crews{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
-}
-
-.team-people + .team-crews{
-  margin-top: 12px;
-}
-
-.team-crew{
-  padding: 18px 20px 20px;
-}
-
-.team-crew-title{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 14px;
-  color: var(--ponthe-ink);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.team-crew-count{
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--ponthe-tint);
-  color: var(--ponthe-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.team-chips{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.credits-line dd{
   margin: 0;
-  padding: 0;
-  list-style: none;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.55;
 }
 
-.team-chips li{
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--ponthe-tint);
-  color: var(--ponthe-ink);
-  font-size: 14px;
+.credits-line dd span{
+  display: block;
 }
 
 .site-footer{
@@ -791,21 +699,41 @@ body{
   text-align: center;
 }
 
+/* The last line of the credits. The shadow covers the hairline that
+   rounding can leave between two blocks of the same colour. */
+.site-footer-dark{
+  border-top: none;
+  background: #12162f;
+  box-shadow: 0 -1px 0 #12162f;
+  color: rgba(255, 255, 255, 0.45);
+  padding-bottom: 40px;
+}
+
 .site-footer p{
   margin: 0;
 }
 
 @media screen and (max-width: 575px) {
   .team-section{
-    padding: 56px 16px 64px;
+    padding: 72px 16px 56px;
   }
 
-  .team-group{
-    margin-top: 36px;
+  .credits-group{
+    margin-top: 48px;
   }
 
-  .team-crews{
-    grid-template-columns: 1fr;
+  /* Roles are shorter than names: the axis moves left of the middle. */
+  .credits-line{
+    grid-template-columns: 40% 1fr;
+    column-gap: 18px;
+  }
+
+  .credits-line dt{
+    font-size: 13px;
+  }
+
+  .credits-line dd{
+    font-size: 16px;
   }
 }
 

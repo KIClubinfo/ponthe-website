@@ -43,10 +43,11 @@ describe('HomePage', () => {
     expect(document.querySelectorAll('img').length).toBe(1);
   });
 
-  test('the promotion comes from the team, in the hero and above the roster', () => {
+  test('the promotion comes from the team, in the hero and in the title of the credits', () => {
     render(<HomePage team={team} />);
-    expect(screen.getByText('029')).toHaveClass('badge-hero-yellow');
-    expect(screen.getByText('Ponthé 029')).toHaveClass('team-section-eyebrow');
+    const hero = document.querySelector('.hero-section');
+    expect(within(hero).getByText('029')).toHaveClass('badge-hero-yellow');
+    expect(screen.getByRole('heading', { level: 2, name: "L'équipe 029" })).toHaveClass('team-section-title');
   });
 
   test('renders the subtitle about the club', () => {
@@ -75,36 +76,50 @@ describe('HomePage', () => {
     expect(document.getElementById('team')).toHaveClass('team-section');
   });
 
-  test('a role held by one person is a card: initials, name, role', () => {
+  test('the team is set as end credits: a role, then whoever holds it', () => {
     render(<HomePage team={team} />);
-    const bureau = screen.getByRole('heading', { name: 'Le Bureau' }).closest('.team-group');
-    const cards = bureau.querySelectorAll('.team-person');
-    expect(cards.length).toBe(2);
-    expect(within(cards[0]).getByText('Ada Lovelace')).toHaveClass('team-person-name');
-    expect(within(cards[0]).getByText('Présidente')).toHaveClass('team-person-role');
-    expect(within(cards[0]).getByText('AL')).toHaveClass('team-avatar');
-    // First and last word of the name, whatever stands in between.
-    expect(within(cards[1]).getByText('JS')).toBeInTheDocument();
+    const bureau = screen.getByRole('heading', { name: 'Le Bureau' }).closest('.credits-group');
+    const lines = bureau.querySelectorAll('.credits-line');
+    expect(lines.length).toBe(2);
+    expect(lines[0].querySelector('dt')).toHaveTextContent('Présidente');
+    expect(lines[0].querySelector('dd')).toHaveTextContent('Ada Lovelace');
+    expect(lines[1].querySelector('dt')).toHaveTextContent('Trez');
+    expect(lines[1].querySelector('dd')).toHaveTextContent('Jean-Baptiste de La Salle');
+    // Departments come in the order the admin gives them.
+    expect(
+      Array.from(document.querySelectorAll('.credits-group-title')).map(title => title.textContent)
+    ).toEqual(['Le Bureau', 'Pôle Création']);
   });
 
-  test('a role shared by several is a list of names, with their number', () => {
+  test('a role shared by several lists them one under the other', () => {
     render(<HomePage team={team} />);
-    const group = screen.getByRole('heading', { name: 'Pôle Création' }).closest('.team-group');
-    const crew = group.querySelector('.team-crew');
-    expect(within(crew).getByRole('heading', { name: /Photographes/ })).toBeInTheDocument();
-    expect(within(crew).getByText('3')).toHaveClass('team-crew-count');
-    expect(Array.from(crew.querySelectorAll('.team-chips li')).map(li => li.textContent)).toEqual([
+    const group = screen.getByRole('heading', { name: 'Pôle Création' }).closest('.credits-group');
+    const [crew, alone] = group.querySelectorAll('.credits-line');
+    expect(crew.querySelector('dt')).toHaveTextContent('Photographes');
+    expect(Array.from(crew.querySelectorAll('dd span')).map(name => name.textContent)).toEqual([
       'Nadar', 'Vivian Maier', 'Robert Doisneau',
     ]);
-    // The same group can hold both kinds.
-    expect(within(group).getByText('Émile Reynaud')).toHaveClass('team-person-name');
+    expect(alone.querySelectorAll('dd span').length).toBe(1);
+  });
+
+  test('a role nobody holds yet is left out', () => {
+    const vacant = {
+      ...team,
+      sections: [{ title: 'Le Bureau', roles: [
+        { title: 'Présidente', people: ['Ada Lovelace'] },
+        { title: 'Trez', people: [] },
+      ] }],
+    };
+    render(<HomePage team={vacant} />);
+    expect(document.querySelectorAll('.credits-line').length).toBe(1);
+    expect(screen.queryByText('Trez')).not.toBeInTheDocument();
   });
 
   test('a team without a picture yet still has its page', () => {
     render(<HomePage team={{ ...team, photo: null }} />);
     expect(document.querySelector('img')).not.toBeInTheDocument();
     expect(document.querySelector('.hero-section')).toHaveClass('hero-plain');
-    expect(screen.getByText('029')).toBeInTheDocument();
+    expect(screen.getAllByText('029').length).toBe(2);
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
   });
 
@@ -116,13 +131,16 @@ describe('HomePage', () => {
     expect(document.getElementById('team')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: "Voir l'équipe" })).not.toBeInTheDocument();
     expect(document.querySelector('.hero-eyebrow')).not.toBeInTheDocument();
+    // No credits to close: the footer keeps its usual look.
+    expect(document.querySelector('.site-footer')).not.toHaveClass('site-footer-dark');
   });
 
-  test('renders the footer, dated from the current year', () => {
+  test('the footer closes the credits, dated from the current year', () => {
     render(<HomePage team={team} />);
-    expect(
-      screen.getByText(new RegExp('© ' + new Date().getFullYear() + ' Club Ponthé — École nationale des ponts et chaussées'))
-    ).toBeInTheDocument();
+    const line = screen.getByText(
+      new RegExp('© ' + new Date().getFullYear() + ' Club Ponthé — École nationale des ponts et chaussées')
+    );
+    expect(line.closest('.site-footer')).toHaveClass('site-footer-dark');
   });
 
   test('App.css keeps the hero above the fold (subtracts the navbar height)', () => {

@@ -4,58 +4,29 @@ import Footer from './Footer'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import './../App.css';
 
-// "Maxime Novo-Frelicot" -> "MN": first and last word, as on a name tag.
-const initials = (name) => {
-    const words = name.trim().split(/\s+/);
-    const last = words.length > 1 ? words[words.length - 1] : '';
-    return (words[0].charAt(0) + last.charAt(0)).toUpperCase();
-};
-
-// A role held by one person is a card with that person; a role shared by
-// several (photographers, video makers) is a list of names under its title.
+// The team of a photo and video club, set as the end credits of a film: a
+// role on one side of an axis, whoever holds it on the other, a heading over
+// each department. A role shared by several lists them one under the other.
 function TeamSection({team}) {
     return (
         <section className="team-section" id="team">
             <div className="team-section-inner">
-                <p className="team-section-eyebrow">Ponthé {team.name}</p>
-                <h2 className="team-section-title">L'équipe</h2>
-                {team.sections.map(section => {
-                    const alone = section.roles.filter(role => role.people.length === 1);
-                    const crews = section.roles.filter(role => role.people.length > 1);
-                    return (
-                        <div className="team-group" key={section.title}>
-                            <h3 className="team-group-title">{section.title}</h3>
-                            {alone.length > 0 && (
-                                <ul className="team-people">
-                                    {alone.map(role => (
-                                        <li className="team-person" key={role.title + role.people[0]}>
-                                            <span className="team-avatar" aria-hidden="true">{initials(role.people[0])}</span>
-                                            <span className="team-person-text">
-                                                <span className="team-person-name">{role.people[0]}</span>
-                                                <span className="team-person-role">{role.title}</span>
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                            {crews.length > 0 && (
-                                <div className="team-crews">
-                                    {crews.map(role => (
-                                        <div className="team-crew" key={role.title}>
-                                            <h4 className="team-crew-title">
-                                                {role.title}
-                                                <span className="team-crew-count">{role.people.length}</span>
-                                            </h4>
-                                            <ul className="team-chips">
-                                                {role.people.map(name => <li key={name}>{name}</li>)}
-                                            </ul>
-                                        </div>
-                                    ))}
+                <h2 className="team-section-title">L'équipe <span>{team.name}</span></h2>
+                {team.sections.map(section => (
+                    <div className="credits-group" key={section.title}>
+                        <h3 className="credits-group-title">{section.title}</h3>
+                        <dl className="credits-list">
+                            {section.roles.filter(role => role.people.length > 0).map(role => (
+                                <div className="credits-line" key={role.title + role.people[0]}>
+                                    <dt>{role.title}</dt>
+                                    <dd>
+                                        {role.people.map(name => <span key={name}>{name}</span>)}
+                                    </dd>
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
+                            ))}
+                        </dl>
+                    </div>
+                ))}
             </div>
         </section>
     );
@@ -97,7 +68,7 @@ export default function HomePage ({team}){
 
                 {team && <TeamSection team={team}/>}
             </main>
-            <Footer/>
+            <Footer dark={Boolean(team)}/>
         </>
     )
 }
