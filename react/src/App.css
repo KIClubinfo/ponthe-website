@@ -836,6 +836,12 @@ body{
   text-align: center;
 }
 
+.gallery-grid-empty a{
+  color: var(--ponthe-blue-dark);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
 .gallery-card-affiche{
   display: flex;
   flex-direction: column;

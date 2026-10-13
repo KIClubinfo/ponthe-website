@@ -23,8 +23,22 @@ describe('GalleryMosaic', () => {
     expect(screen.queryByText('Croisière')).not.toBeInTheDocument();
   });
 
+  afterEach(() => {
+    delete global.is_authenticated;
+  });
+
   test('says so when the year has no gallery, rather than leaving a blank page', () => {
+    global.is_authenticated = true;
     render(<GalleryMosaic result={galleries} year="2019-2020" />);
     expect(screen.getByText('Aucune galerie pour cette année.')).toBeInTheDocument();
+  });
+
+  test('a visitor is told the galleries may be there, behind the login', () => {
+    // Not logged in, only public galleries are sent: "none this year" would
+    // be wrong more often than not.
+    global.is_authenticated = false;
+    render(<GalleryMosaic result={galleries} year="2019-2020" />);
+    expect(screen.getByText(/Aucune galerie publique pour cette année/)).toBeInTheDocument();
+    expect(screen.getByText('Connectez-vous')).toHaveAttribute('href', '/login');
   });
 });

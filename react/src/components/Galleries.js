@@ -45,6 +45,10 @@ export default function Galleries(props) {
 
   const title = props.view === 'exposition' ? 'Expositions' : 'Galeries';
   const count = Object.values(result || {}).filter(gallery => gallery.year == year).length;
+  // A visitor is only sent the public ones: say so rather than "0 galerie".
+  const visitor = typeof is_authenticated !== 'undefined' && !is_authenticated;
+  const kind = props.view === 'exposition' ? 'exposition' : 'galerie';
+  const plural = count > 1 ? 's' : '';
 
   return (
       <>
@@ -55,7 +59,7 @@ export default function Galleries(props) {
               <h1 className="hero-title">{title}</h1>
               {year && (
                 <p className="hero-count">
-                  {count} {props.view === 'exposition' ? 'exposition' : 'galerie'}{count > 1 ? 's' : ''} en {year}
+                  {count} {kind}{plural}{visitor ? ' publique' + plural : ''} en {year}
                 </p>
               )}
             </div>

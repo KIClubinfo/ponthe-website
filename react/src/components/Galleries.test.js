@@ -39,6 +39,17 @@ describe('Galleries (page liste des galeries)', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    delete global.is_authenticated;
+  });
+
+  test('a visitor is told the count is of public galleries', async () => {
+    global.is_authenticated = false;
+    render(<Galleries view="galerie" />);
+    await waitFor(() =>
+      expect(screen.getByText('1 galerie publique en 2025-2026')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole('button', { name: '2023-2024' }));
+    expect(screen.getByText('0 galerie publique en 2023-2024')).toBeInTheDocument();
   });
 
   test('renders the pervenche banner with the title and the count of the year', async () => {
