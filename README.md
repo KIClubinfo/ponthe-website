@@ -52,7 +52,7 @@ Sur le serveur, une fois les changements fusionnés dans ```master``` :
 ```
 scripts/deploy.sh
 ```
-Le script récupère ```master```, construit les images et le frontend pendant que le site tourne, sauvegarde la base dans ```backups/```, puis remplace les conteneurs. La coupure se limite au redémarrage du backend.
+Le script récupère ```master```, construit les images et le frontend pendant que le site tourne, sauvegarde la base dans ```backups/```, remplace les conteneurs dont l'image a changé, puis publie les fichiers statiques. La coupure se limite au redémarrage du backend ; un changement qui ne touche que le frontend n'en provoque aucune.
 
 ### Problèmes de déploiement
 

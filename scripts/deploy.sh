@@ -64,5 +64,12 @@ fi
 # nginx garde l'adresse de l'ancien conteneur back et répond 502 sans cela.
 "${COMPOSE[@]}" exec -T nginx nginx -s reload < /dev/null
 
+# nginx sert la copie que collectstatic fait des bundles, et back ne le lance
+# qu'à son démarrage. Or compose ne recrée pas back quand son image n'a pas
+# changé : un déploiement qui ne touche que le frontend compilait les bundles
+# sans jamais les publier.
+dire "Publication des fichiers statiques"
+"${COMPOSE[@]}" exec -T back python manage.py collectstatic --noinput < /dev/null
+
 dire "État"
 "${COMPOSE[@]}" ps
