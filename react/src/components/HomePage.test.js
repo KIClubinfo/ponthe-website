@@ -1,39 +1,63 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import HomePage from './HomePage';
 
 jest.mock('./Navbar', () => () => <div data-testid="mock-navbar" />);
 
+// What index.html hands over: the team the admin has on display.
+const team = {
+  name: '029',
+  photo: '/media/.equipe/029.jpg',
+  sections: [
+    {
+      title: 'Le Bureau',
+      roles: [
+        { title: 'Présidente', people: ['Ada Lovelace'] },
+        { title: 'Trez', people: ['Jean-Baptiste de La Salle'] },
+      ],
+    },
+    {
+      title: 'Pôle Création',
+      roles: [
+        { title: 'Photographes', people: ['Nadar', 'Vivian Maier', 'Robert Doisneau'] },
+        { title: 'Respo Matos', people: ['Émile Reynaud'] },
+      ],
+    },
+  ],
+};
+
 describe('HomePage', () => {
   test('renders the title once, as the heading of the page', () => {
-    render(<HomePage />);
+    render(<HomePage team={team} />);
     expect(screen.getByRole('heading', { level: 1, name: 'Ponthé' })).toHaveClass('poster-title');
   });
 
   test('the group picture is an image of the page, not a background', () => {
     // The stylesheet lays it behind the text on a wide screen and above it,
     // whole, on a phone: that takes an element.
-    render(<HomePage />);
-    const photo = screen.getByAltText("L'équipe du Ponthé 028");
+    render(<HomePage team={team} />);
+    const photo = screen.getByAltText("L'équipe du Ponthé 029");
     expect(photo).toHaveClass('hero-photo');
-    expect(photo.closest('.hero-section')).toBeInTheDocument();
+    expect(photo).toHaveAttribute('src', '/media/.equipe/029.jpg');
+    expect(photo.closest('.hero-section')).not.toHaveClass('hero-plain');
     expect(document.querySelectorAll('img').length).toBe(1);
   });
 
-  test('renders the yellow 028 badge', () => {
-    render(<HomePage />);
-    expect(screen.getByText('028')).toHaveClass('badge-hero-yellow');
+  test('the promotion comes from the team, in the hero and above the roster', () => {
+    render(<HomePage team={team} />);
+    expect(screen.getByText('029')).toHaveClass('badge-hero-yellow');
+    expect(screen.getByText('Ponthé 029')).toHaveClass('team-section-eyebrow');
   });
 
   test('renders the subtitle about the club', () => {
-    render(<HomePage />);
+    render(<HomePage team={team} />);
     expect(
       screen.getByText("Club photo & vidéo de l'École des Ponts")
     ).toBeInTheDocument();
   });
 
   test('renders the two hero pills with correct hrefs', () => {
-    render(<HomePage />);
+    render(<HomePage team={team} />);
     const galeries = screen.getByRole('link', { name: /Accéder aux galeries/i });
     expect(galeries).toHaveAttribute('href', '/galleries');
     expect(galeries).toHaveClass('pill-yellow');
@@ -43,28 +67,61 @@ describe('HomePage', () => {
   });
 
   test('renders the animated scroll chevron as an accessible link', () => {
-    render(<HomePage />);
+    render(<HomePage team={team} />);
     const chevron = screen.getByRole('link', { name: "Voir l'équipe" });
     expect(chevron).toHaveAttribute('href', '#team');
     expect(chevron).toHaveClass('scroll-chevron');
-  });
-
-  test('renders the team section with roster cards', () => {
-    render(<HomePage />);
-    expect(screen.getByText(/l'équipe/i)).toBeInTheDocument();
-    expect(screen.getByText('Le Bureau')).toBeInTheDocument();
-    expect(screen.getByText('Responsables')).toBeInTheDocument();
-    expect(screen.getByText('Pôle Création')).toBeInTheDocument();
-    expect(screen.getByText(/Présidente/)).toBeInTheDocument();
-    expect(document.querySelectorAll('.roster-card-item').length).toBe(3);
-    // Where the "Équipe" link of the menu and the arrow of the hero land.
+    // Where it lands, and the "Équipe" link of the menu with it.
     expect(document.getElementById('team')).toHaveClass('team-section');
   });
 
-  test('renders the footer', () => {
-    render(<HomePage />);
+  test('a role held by one person is a card: initials, name, role', () => {
+    render(<HomePage team={team} />);
+    const bureau = screen.getByRole('heading', { name: 'Le Bureau' }).closest('.team-group');
+    const cards = bureau.querySelectorAll('.team-person');
+    expect(cards.length).toBe(2);
+    expect(within(cards[0]).getByText('Ada Lovelace')).toHaveClass('team-person-name');
+    expect(within(cards[0]).getByText('Présidente')).toHaveClass('team-person-role');
+    expect(within(cards[0]).getByText('AL')).toHaveClass('team-avatar');
+    // First and last word of the name, whatever stands in between.
+    expect(within(cards[1]).getByText('JS')).toBeInTheDocument();
+  });
+
+  test('a role shared by several is a list of names, with their number', () => {
+    render(<HomePage team={team} />);
+    const group = screen.getByRole('heading', { name: 'Pôle Création' }).closest('.team-group');
+    const crew = group.querySelector('.team-crew');
+    expect(within(crew).getByRole('heading', { name: /Photographes/ })).toBeInTheDocument();
+    expect(within(crew).getByText('3')).toHaveClass('team-crew-count');
+    expect(Array.from(crew.querySelectorAll('.team-chips li')).map(li => li.textContent)).toEqual([
+      'Nadar', 'Vivian Maier', 'Robert Doisneau',
+    ]);
+    // The same group can hold both kinds.
+    expect(within(group).getByText('Émile Reynaud')).toHaveClass('team-person-name');
+  });
+
+  test('a team without a picture yet still has its page', () => {
+    render(<HomePage team={{ ...team, photo: null }} />);
+    expect(document.querySelector('img')).not.toBeInTheDocument();
+    expect(document.querySelector('.hero-section')).toHaveClass('hero-plain');
+    expect(screen.getByText('029')).toBeInTheDocument();
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+  });
+
+  test('no team on display: the page stands without one', () => {
+    render(<HomePage team={null} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Ponthé' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Accéder aux galeries/i })).toBeInTheDocument();
+    expect(document.querySelector('.hero-section')).toHaveClass('hero-plain');
+    expect(document.getElementById('team')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: "Voir l'équipe" })).not.toBeInTheDocument();
+    expect(document.querySelector('.hero-eyebrow')).not.toBeInTheDocument();
+  });
+
+  test('renders the footer, dated from the current year', () => {
+    render(<HomePage team={team} />);
     expect(
-      screen.getByText(/Club Ponthé — École nationale des ponts et chaussées/i)
+      screen.getByText(new RegExp('© ' + new Date().getFullYear() + ' Club Ponthé — École nationale des ponts et chaussées'))
     ).toBeInTheDocument();
   });
 

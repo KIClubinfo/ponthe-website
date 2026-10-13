@@ -286,8 +286,7 @@ body{
   font-size: 18px;
 }
 
-.gallery-title,
-.page-header-title{
+.gallery-title{
   margin: 0;
   color: var(--ponthe-blue-dark);
   font-weight: 800;
@@ -310,30 +309,9 @@ body{
   gap: 8px;
 }
 
-.page-header{
-  max-width: var(--ponthe-page);
-  margin: 0 auto;
-  padding: 44px 24px 32px;
-}
-
-.page-empty{
-  max-width: var(--ponthe-page);
-  margin: 0 auto;
-  padding: 0 24px 96px;
-  color: var(--ponthe-muted);
-}
-
 @media screen and (max-width: 575px) {
   .page-head{
     padding: 24px 16px 18px;
-  }
-
-  .page-header{
-    padding: 28px 16px 20px;
-  }
-
-  .page-empty{
-    padding: 0 16px 64px;
   }
 }
 
@@ -601,20 +579,60 @@ body{
   }
 }
 
+/* No picture yet (a team just created): the colour of the house instead. */
+.hero-section.hero-plain{
+  min-height: 0;
+  display: flex;
+  padding: 88px 24px 64px;
+  background: var(--ponthe-blue)
+    radial-gradient(900px 320px at 12% -30%, rgba(255, 255, 255, 0.24), transparent 65%);
+}
+
+.hero-section.hero-plain::after{
+  display: none;
+}
+
+.hero-plain .hero-eyebrow,
+.hero-plain .hero-subtitle{
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-plain .poster-title{
+  color: white;
+}
+
+.hero-plain .pill-white{
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: white;
+}
+
+/* ===== The team ===== */
+
 .team-section{
-  background: white;
+  background: var(--ponthe-tint);
   padding: 88px 24px 96px;
   /* The navbar is stuck to the top on a wide screen: land below it. */
   scroll-margin-top: var(--ponthe-nav);
 }
 
 .team-section-inner{
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
+.team-section-eyebrow{
+  margin: 0 0 10px;
+  color: var(--ponthe-muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .team-section-title{
-  margin: 0 0 48px;
+  margin: 0;
   text-align: center;
   color: var(--ponthe-blue-dark);
   font-weight: 800;
@@ -633,26 +651,16 @@ body{
   background: var(--ponthe-yellow);
 }
 
-.roster-grid{
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 32px;
+.team-group{
+  margin-top: 48px;
 }
 
-@media screen and (min-width: 768px) {
-  .roster-grid{
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-  }
-}
-
-.roster-column{
+/* The name of a group, and a hairline running to the edge. */
+.team-group-title{
   display: flex;
-  flex-direction: column;
-}
-
-.roster-group-title{
-  margin: 0 0 12px;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 16px;
   color: var(--ponthe-muted);
   font-size: 12px;
   font-weight: 700;
@@ -660,58 +668,118 @@ body{
   text-transform: uppercase;
 }
 
-.roster-group-title:not(:first-child){
-  margin-top: 32px;
+.team-group-title::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ponthe-line);
 }
 
-.roster-card-item{
-  padding: 8px 22px;
-  border-radius: var(--ponthe-radius);
-  background: var(--ponthe-tint);
-}
-
-/* A role on the left, a name on the right, a hairline between two lines. */
-.roster-card-item p{
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
+.team-people{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
   margin: 0;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--ponthe-line);
-  font-weight: 600;
-  text-align: right;
+  padding: 0;
+  list-style: none;
 }
 
-.roster-card-item p:last-child{
-  border-bottom: none;
+.team-person,
+.team-crew{
+  border-radius: var(--ponthe-radius);
+  background: white;
+  box-shadow: 0 1px 2px rgba(31, 37, 71, 0.05), 0 8px 20px -18px rgba(31, 37, 71, 0.35);
 }
 
-.roster-card-item strong{
+.team-person{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.team-avatar{
   flex: none;
-  color: var(--ponthe-muted);
-  font-weight: 500;
-  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(129, 147, 242, 0.18);
+  color: var(--ponthe-blue-dark);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.roster-card-item p.roster-subtitle{
-  display: block;
-  padding-bottom: 4px;
-  border-bottom: none;
+.team-person-text{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.team-person-name{
+  color: var(--ponthe-ink);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.team-person-role{
+  margin-top: 2px;
+  color: var(--ponthe-muted);
+  font-size: 14px;
+}
+
+.team-crews{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.team-people + .team-crews{
+  margin-top: 12px;
+}
+
+.team-crew{
+  padding: 18px 20px 20px;
+}
+
+.team-crew-title{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
   color: var(--ponthe-ink);
   font-size: 16px;
   font-weight: 700;
-  text-align: left;
 }
 
-.roster-card-item p.roster-names{
-  display: block;
-  padding-top: 0;
+.team-crew-count{
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--ponthe-tint);
   color: var(--ponthe-muted);
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.65;
-  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.team-chips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-chips li{
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ponthe-tint);
+  color: var(--ponthe-ink);
+  font-size: 14px;
 }
 
 .site-footer{
@@ -729,15 +797,15 @@ body{
 
 @media screen and (max-width: 575px) {
   .team-section{
-    padding: 48px 16px 64px;
+    padding: 56px 16px 64px;
   }
 
-  .team-section-title{
-    margin-bottom: 32px;
+  .team-group{
+    margin-top: 36px;
   }
 
-  .roster-card-item{
-    padding: 6px 16px;
+  .team-crews{
+    grid-template-columns: 1fr;
   }
 }
 

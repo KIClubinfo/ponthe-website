@@ -86,6 +86,16 @@ Le backend du site est développé en Python avec le framework Django. Le gestio
 En prod, le container back lance un serveur gunicorn qui fait le lien entre NGINX et le serveur Django Python.
 Afin de faciliter le chargement de nouvelles galeries, le back contient aussi un serveur redis et celery permettant d'effectuer des tâches de mainère asynchrône. Cette fonctionnalité permet d'éviter de recevoir un timeout de NGINX lorsque l'upload est longue.
 
+#### Passation annuelle
+
+Rien dans le code ne nomme une promotion : la passation se fait dans l'administration (```/admin/```, ou le bouton « Équipe du site » de la page de gestion), sans déploiement.
+
+1. **L'équipe** (« Équipes ») : ouvrir celle de l'an dernier, changer le numéro de promotion, choisir la nouvelle photo de groupe, remplacer les noms, puis cliquer sur « Enregistrer en tant que nouveau ». L'équipe cochée « affichée sur le site » est celle de la page d'accueil ; en cocher une retire la précédente, qui est conservée. Chaque ligne du tableau est un rôle : sa rubrique (Le Bureau, Responsables…), son intitulé, et le ou les noms séparés par des virgules. Un rôle tenu par une seule personne s'affiche comme une carte, un rôle partagé comme une liste de noms.
+2. **L'année scolaire** (« Années scolaires ») : ajouter par exemple ```2027-2028```. Une galerie que l'on crée est rangée dans l'année la plus récente.
+3. **Les accès** (« Utilisateurs ») : cocher les comptes des nouveaux membres et choisir l'action « Donner l'accès à la gestion des galeries » ; cocher ceux des sortants et choisir « Retirer tout accès à la gestion et à l'administration ». Un compte existe dès la première connexion de la personne par le SSO.
+
+Les équipes sont ouvertes à tous ceux qui gèrent les galeries ; les années et les comptes, aux superutilisateurs. La photo de groupe est redimensionnée à l'enregistrement et rangée dans ```back/media/.equipe/```, seul dossier des médias servi à tout le monde sans être une galerie.
+
 #### Suppression de photos et de galeries
 
 Supprimer une photo (ou une galerie) retire aussi ses fichiers du site : la miniature est effacée et l'original est déplacé dans ```back/media/.corbeille/<slug>/uploads/```. Ce dossier n'est servi par aucune route et n'est jamais vidé automatiquement : pour restaurer une photo, remettre son fichier dans le dossier ```uploads/``` de la galerie puis relancer l'import ; pour libérer de la place, vider le dossier à la main.

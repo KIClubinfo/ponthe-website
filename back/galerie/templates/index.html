@@ -16,6 +16,8 @@
 
     </div><!--End of Content-->
 
+    {# The team on display, read by the page as it starts: no second request. #}
+    {{ team|json_script:"team-data" }}
     <script>
         window.react_mount = document.getElementById('Basic');
     </script>

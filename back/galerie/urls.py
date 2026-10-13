@@ -17,6 +17,7 @@ Including another URLconf
 
 import django_cas_ng.views
 from django.contrib import admin
+from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 
 from . import views
@@ -30,11 +31,13 @@ urlpatterns = [
     path("gallery/<slug:slug>", views.gallery, name="gallery"),
     path("galleries/", views.galleries, name="galleries"),
     path("expositions/", views.expositions, name="expositions"),
-    path("material/", views.material, name="material"),
     path("gestion/", include("gestion.urls")),
     path("api/", include("api.urls")),
     path("login/", views.LoginView.as_view(), name="login"),
-    path("", include("django.contrib.auth.urls")),
+    # Only logging out is kept from django.contrib.auth.urls. Its pages to
+    # reset or change a password were linked from nowhere, and resetting one
+    # sends an e-mail the server has no means to send.
+    path("logout/", LogoutView.as_view(), name="logout"),
     path(
         "accounts/login/", django_cas_ng.views.LoginView.as_view(), name="cas_ng_login"
     ),

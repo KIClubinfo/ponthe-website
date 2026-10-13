@@ -1,6 +1,6 @@
 import random
 
-from api.models import File, Gallery, Material, Promo, Report, Year
+from api.models import File, Gallery, Promo, Report, Year
 from rest_framework import serializers
 
 random.seed()
@@ -44,12 +44,6 @@ class FileSerializer(serializers.ModelSerializer):
             "gallery",
             "link",
         ]
-
-
-class MaterialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Material
-        fields = ["name"]
 
 
 class YearSerializer(serializers.ModelSerializer):

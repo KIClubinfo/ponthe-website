@@ -24,7 +24,6 @@ describe('CustomNavbar', () => {
       '/galleries/': ['Galeries'],
       '/gallery/gala': ['Galeries'],
       '/expositions/': ['Expositions'],
-      '/material/': ['Matériel'],
       '/gestion/gallery/gala': ['Gestion'],
     };
     for (const [path, expected] of Object.entries(pages)) {
@@ -62,7 +61,7 @@ describe('CustomNavbar', () => {
     expect(screen.getByText('Admin').closest('a')).toHaveAttribute('href', '/admin');
   });
 
-  test('les liens publics sont Galeries, Expositions, Équipe et Matériel', () => {
+  test('les liens publics sont Galeries, Expositions et Équipe', () => {
     global.is_authenticated = false;
     global.is_staff = false;
     global.is_superuser = false;
@@ -70,6 +69,6 @@ describe('CustomNavbar', () => {
     expect(screen.getByText('Galeries').closest('a')).toHaveAttribute('href', '/galleries');
     expect(screen.getByText('Expositions').closest('a')).toHaveAttribute('href', '/expositions');
     expect(screen.getByText('Équipe').closest('a')).toHaveAttribute('href', '/#team');
-    expect(screen.getByText('Matériel').closest('a')).toHaveAttribute('href', '/material');
+    expect(screen.queryByText('Matériel')).not.toBeInTheDocument();
   });
 });

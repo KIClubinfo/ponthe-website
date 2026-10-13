@@ -5,7 +5,7 @@ import logging
 from urllib.parse import quote
 
 import api.models as models
-from api.models import Gallery
+from api.models import TEAM_FOLDER, Gallery, Team
 from django.conf import settings
 from django.contrib.auth import models as models2
 from django.contrib.auth import views as auth_views
@@ -109,7 +109,10 @@ def media(request, path):
     if any(part in ("", ".", "..") for part in dirs):
         return HttpResponseForbidden()
     gallery = Gallery.objects.filter(slug=dirs[0])
-    if gallery.count() == 0:
+    if dirs[0] == TEAM_FOLDER:
+        # The picture of the team is on the home page, for everyone.
+        access_granted = True
+    elif gallery.count() == 0:
         return HttpResponseForbidden()
     else:
         access_granted = gallery.first().can_user_access(user)
@@ -144,11 +147,8 @@ def expositions(request):
 
 
 def index(request):
-    return render(request, "index.html")
-
-
-def material(request):
-    return render(request, "material.html")
+    team = Team.objects.filter(current=True).prefetch_related("roles").first()
+    return render(request, "index.html", {"team": team.on_display() if team else None})
 
 
 @user_passes_test(lambda u: u.is_superuser)

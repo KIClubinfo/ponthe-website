@@ -26,7 +26,6 @@ const CustomNavbar = ({props}) => {
                 <a className={linkClass('/galleries', '/gallery')} href="/galleries">Galeries</a>
                 <a className={linkClass('/expositions')} href="/expositions">Expositions</a>
                 <a className="nav-text" href="/#team">Équipe</a>
-                <a className={linkClass('/material')} href="/material">Matériel</a>
                 {is_staff && (<a className={linkClass('/gestion')} href="/gestion">Gestion</a> )}
                 {is_superuser && (<a className="nav-text" href="/admin">Admin</a> )}
               </Nav>

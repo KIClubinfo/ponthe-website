@@ -1,7 +1,7 @@
 from api.views import getRoutes
 from django.test import SimpleTestCase, TestCase
 from django.urls import resolve, reverse
-from galerie.views import LoginView, galleries, gallery, index, material
+from galerie.views import LoginView, galleries, gallery, index
 from gestion.views import index_view
 
 
@@ -21,10 +21,6 @@ class TestUrls(SimpleTestCase):
     def test_galleries_url_resolves(self):
         url = reverse("galleries")
         self.assertEqual(resolve(url).func, galleries)
-
-    def test_material_url_resolves(self):
-        url = reverse("material")
-        self.assertEqual(resolve(url).func, material)
 
     def test_gestion_url_resolves(self):
         url = reverse("gestion")

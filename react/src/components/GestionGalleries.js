@@ -7,6 +7,7 @@ import Cookies from 'js-cookie';
 import GalleryLink from './GalleryLink';
 import CustomNavbar from './Navbar'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import GroupsIcon from '@mui/icons-material/Groups';
 import { TextField, Select, MenuItem } from '@mui/material';
 
 export default function Gallery(){
@@ -106,6 +107,11 @@ export default function Gallery(){
             <p className="page-meta">{galleriesComp.length} galerie{galleriesComp.length > 1 ? 's' : ''}, toutes visibilités confondues</p>
           </div>
           <div className="page-head-actions">
+            {/* Photo de groupe, promotion et membres de la page d'accueil. */}
+            <a className="p-btn p-btn-ghost" href="/admin/api/team/">
+              <GroupsIcon/>
+              Équipe du site
+            </a>
             <button type="button" className="p-btn p-btn-primary" onClick={openModal}>
               <AddCircleOutlineIcon/>
               Nouvelle galerie
