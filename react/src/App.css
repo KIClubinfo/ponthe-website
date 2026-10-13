@@ -13,6 +13,7 @@
   --ponthe-line: #E3E6F6;        /* hairlines, borders */
   --ponthe-tint: #F5F6FD;        /* quiet surfaces */
   --ponthe-yellow: #FFC425;      /* accent, used sparingly */
+  --ponthe-night: #12162f;       /* the home page: veil of the picture, credits */
   --ponthe-red: #B8392C;
   --ponthe-radius: 14px;
   --ponthe-shadow: 0 1px 2px rgba(31, 37, 71, 0.06), 0 10px 28px -16px rgba(31, 37, 71, 0.28);
@@ -352,7 +353,7 @@ body{
   inset: 0;
   z-index: -1;
   background: linear-gradient(180deg, rgba(31, 37, 71, 0.2) 0%, rgba(31, 37, 71, 0.05) 32%,
-    rgba(18, 22, 47, 0.55) 66%, rgba(18, 22, 47, 0.9) 92%, #12162f 100%);
+    rgba(18, 22, 47, 0.55) 66%, rgba(18, 22, 47, 0.9) 92%, var(--ponthe-night) 100%);
 }
 
 .hero-content{
@@ -476,13 +477,17 @@ body{
 
 /* Narrow or upright screens, phone or tablet: a wide group picture cropped
    to a tall screen keeps five faces out of twenty, with the title printed
-   across them. The picture goes on top, whole, and the text underneath. */
+   across them. The picture goes on top, whole, and the text underneath.
+
+   Same film as on a wide screen all the same: the picture fades into the
+   night of the credits, the title is white on it, and the page runs dark
+   from there to its last line. */
 @media screen and (max-width: 767px), screen and (orientation: portrait) {
   .hero-section{
     min-height: 0;
     display: block;
     padding: 0;
-    background: white;
+    background: var(--ponthe-night);
   }
 
   /* The proportions of the picture itself: nobody is cut off at the edges. */
@@ -493,44 +498,44 @@ body{
     aspect-ratio: 16 / 9;
   }
 
+  /* The veil keeps to the picture, and only takes its lower part: the floor
+     under the group, not the faces. */
   .hero-section::after{
-    display: none;
+    inset: 0 0 auto 0;
+    z-index: 0;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(180deg, rgba(18, 22, 47, 0) 52%, rgba(18, 22, 47, 0.6) 80%,
+      var(--ponthe-night) 100%);
+    pointer-events: none;
   }
 
   .hero-content{
+    position: relative;
+    z-index: 1;
     max-width: none;
-    padding: 36px 24px 12px;
+    padding: 28px 24px 8px;
+  }
+
+  /* The text starts in the last of the fade rather than under a clean edge.
+     Its own ground turns solid before the bottom of the picture: where the
+     two blocks meet, rounding left a pale line of the picture showing. */
+  .hero-photo + .hero-content{
+    margin-top: -24px;
+    padding-top: 2px;
+    background: linear-gradient(180deg, rgba(18, 22, 47, 0) 0, var(--ponthe-night) 18px);
   }
 
   .hero-eyebrow{
-    color: var(--ponthe-muted);
     margin-bottom: 12px;
   }
 
   .poster-title{
-    color: var(--ponthe-blue-dark);
     font-size: clamp(48px, 17vw, 96px);
     text-shadow: none;
   }
 
   .hero-subtitle{
-    color: var(--ponthe-muted);
     margin: 12px 0 24px;
-  }
-
-  .pill-white{
-    background: white;
-    border-color: var(--ponthe-line);
-    color: var(--ponthe-blue-dark);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
-  .pill-white:hover,
-  .pill-white:focus{
-    background: var(--ponthe-tint);
-    border-color: var(--ponthe-blue);
-    color: var(--ponthe-blue-dark);
   }
 
   /* The team is the next thing on the screen anyway. */
@@ -541,7 +546,7 @@ body{
 
 @media screen and (max-width: 575px) {
   .hero-content{
-    padding: 28px 20px 12px;
+    padding: 28px 20px 4px;
   }
 
   .hero-pills{
@@ -593,21 +598,6 @@ body{
   display: none;
 }
 
-.hero-plain .hero-eyebrow,
-.hero-plain .hero-subtitle{
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.hero-plain .poster-title{
-  color: white;
-}
-
-.hero-plain .pill-white{
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.7);
-  color: white;
-}
-
 /* ===== The team: end credits ===== */
 
 /* A photo and video club signs its year the way a film does. The colour is
@@ -617,8 +607,8 @@ body{
   /* Laid over the last two pixels of the hero: where the two meet, rounding
      left a pale line of the picture showing. */
   position: relative;
-  box-shadow: 0 -2px 0 #12162f;
-  background: #12162f;
+  box-shadow: 0 -2px 0 var(--ponthe-night);
+  background: var(--ponthe-night);
   color: white;
   padding: 104px 24px 88px;
   /* The navbar is stuck to the top on a wide screen: land below it. */
@@ -703,8 +693,8 @@ body{
    rounding can leave between two blocks of the same colour. */
 .site-footer-dark{
   border-top: none;
-  background: #12162f;
-  box-shadow: 0 -1px 0 #12162f;
+  background: var(--ponthe-night);
+  box-shadow: 0 -1px 0 var(--ponthe-night);
   color: rgba(255, 255, 255, 0.45);
   padding-bottom: 40px;
 }
@@ -715,7 +705,7 @@ body{
 
 @media screen and (max-width: 575px) {
   .team-section{
-    padding: 72px 16px 56px;
+    padding: 64px 16px 56px;
   }
 
   .credits-group{
