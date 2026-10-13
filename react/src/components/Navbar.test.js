@@ -9,6 +9,30 @@ describe('CustomNavbar', () => {
     delete global.is_authenticated;
     delete global.is_staff;
     delete global.is_superuser;
+    window.history.pushState({}, '', '/');
+  });
+
+  test('la page en cours est marquée dans le menu', () => {
+    global.is_authenticated = true;
+    global.is_staff = true;
+    global.is_superuser = false;
+    const active = () =>
+      Array.from(document.querySelectorAll('.nav-text.active')).map(a => a.textContent);
+
+    const pages = {
+      '/': [],
+      '/galleries/': ['Galeries'],
+      '/gallery/gala': ['Galeries'],
+      '/expositions/': ['Expositions'],
+      '/material/': ['Matériel'],
+      '/gestion/gallery/gala': ['Gestion'],
+    };
+    for (const [path, expected] of Object.entries(pages)) {
+      window.history.pushState({}, '', path);
+      const { unmount } = render(<CustomNavbar />);
+      expect(active()).toEqual(expected);
+      unmount();
+    }
   });
 
   test('visiteur anonyme : lien Connexion, pas de lien Déconnexion', () => {

@@ -213,10 +213,23 @@ describe('Gallery selection mode', () => {
     expect(screen.getByText('0 photo(s) sélectionnée(s)')).toBeInTheDocument();
   });
 
-  test('App.css reserves room for the select-toggle button next to the title', () => {
-    const fs = require('fs');
-    const path = require('path');
-    const css = fs.readFileSync(path.join(__dirname, '..', 'App.css'), 'utf8');
-    expect(css).toMatch(/@media[^{]*min-width:\s*576px[^}]*\.gallery-title\s*\{[^}]*max-width:\s*60%/);
+  test('the select button says what it does, and how to leave the mode', async () => {
+    render(<Gallery />);
+    await waitFor(() => expect(screen.getByText('Ma Galerie Test')).toBeInTheDocument());
+
+    const button = screen.getByRole('button', { name: 'Sélectionner' });
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(button);
+    expect(screen.getByRole('button', { name: 'Terminer' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Terminer' }));
+    expect(screen.getByRole('button', { name: 'Sélectionner' })).toBeInTheDocument();
+  });
+
+  test('the header gives the way back and the number of pictures', async () => {
+    render(<Gallery />);
+    await waitFor(() => expect(screen.getByText('Ma Galerie Test')).toBeInTheDocument());
+
+    expect(screen.getByText('Galeries').closest('a')).toHaveAttribute('href', '/galleries');
+    expect(screen.getByText(mockPicsResponse.length + ' photos')).toBeInTheDocument();
   });
 });

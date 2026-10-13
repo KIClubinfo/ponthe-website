@@ -1,836 +1,648 @@
-/* !important: each page loads Bootstrap after this file, and its own body
-   rule would win otherwise. */
-body{
-  background: white!important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-    'Helvetica Neue', sans-serif!important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Ponthé — one stylesheet for every page.
+
+   Loaded after Bootstrap (see styles.js), so a rule here wins over a
+   Bootstrap rule of the same weight. MUI injects its own styles later still:
+   where an MUI icon is sized or coloured, the selector carries two classes. */
+
+:root{
+  --ponthe-blue: #8193F2;        /* pervenche: navbar, banners */
+  --ponthe-blue-deep: #5B6FD6;
+  --ponthe-blue-dark: #4353B8;   /* titles, links, main buttons */
+  --ponthe-ink: #1F2547;         /* text */
+  --ponthe-muted: #6B7396;       /* secondary text */
+  --ponthe-line: #E3E6F6;        /* hairlines, borders */
+  --ponthe-tint: #F5F6FD;        /* quiet surfaces */
+  --ponthe-yellow: #FFC425;      /* accent, used sparingly */
+  --ponthe-red: #B8392C;
+  --ponthe-radius: 14px;
+  --ponthe-shadow: 0 1px 2px rgba(31, 37, 71, 0.06), 0 10px 28px -16px rgba(31, 37, 71, 0.28);
+  --ponthe-shadow-raised: 0 2px 6px rgba(31, 37, 71, 0.08), 0 22px 40px -20px rgba(67, 83, 184, 0.45);
+  --ponthe-page: 1200px;         /* text and cards */
+  --ponthe-page-wide: 1320px;    /* grids of pictures */
+  --ponthe-nav: 64px;            /* height of the navbar */
 }
 
-/* Design tokens Ponthé — validés sur le canvas Superdesign (Affiche arrondie / Hero osé) */
-:root{
-  --ponthe-blue: #8193F2;        /* pervenche : navbar, bandeaux, pieds de cartes */
-  --ponthe-blue-deep: #5B6FD6;   /* ombre dure des cartes affiche */
-  --ponthe-blue-dark: #4353B8;   /* titres de cartes */
-  --ponthe-yellow: rgb(255, 196, 37); /* accent : hover, pills actives, outline */
-  --ponthe-gray-border: #cfcfcf;
-  --ponthe-radius-banner: 32px;
-  --ponthe-radius-card: 16px;
+body{
+  background: white;
+  color: var(--ponthe-ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+::selection{
+  background: rgba(129, 147, 242, 0.35);
+}
+
+:focus-visible{
+  outline: 3px solid rgba(129, 147, 242, 0.7);
+  outline-offset: 2px;
+}
+
+/* ===== Navbar ===== */
 
 .c-nav{
   background-color: var(--ponthe-blue);
-  box-shadow: 0px 0px 7px 0px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 0 rgba(31, 37, 71, 0.08), 0 10px 24px -20px rgba(31, 37, 71, 0.5);
+  min-height: var(--ponthe-nav);
+  z-index: 50;
+}
+
+.c-nav .navbar-brand{
+  padding: 0;
+  margin-right: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.c-nav .navbar-brand img{
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.c-nav .navbar-toggler{
+  border: none;
+  padding: 6px 8px;
+}
+
+.c-nav .navbar-toggler:focus{
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
 }
 
 .nav-text{
-  text-transform: uppercase;
-  font-weight: bold;
-  color: white;
+  position: relative;
+  color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
-  margin-right: 15px;
-  font-family: 'Inter';
-  text-underline-offset: 5px;
+  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 8px 0;
+  margin-right: 24px;
+  transition: color 0.2s ease;
+}
+
+.nav-text::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: white;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
 }
 
 .nav-text:hover{
-  text-decoration: solid underline white 2px;
+  color: white;
+}
+
+.nav-text:hover::after,
+.nav-text.active::after{
+  transform: scaleX(1);
+}
+
+.nav-text.active{
+  color: white;
+}
+
+.nav-text.active::after{
+  background: var(--ponthe-yellow);
+}
+
+/* Log in / log out, set apart from the pages. */
+.nav-cta{
+  margin-right: 0;
+  padding: 8px 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-cta::after{
+  display: none;
+}
+
+.nav-cta:hover{
+  background: white;
+  border-color: white;
+  color: var(--ponthe-blue-dark);
+}
+
+@media screen and (min-width: 992px) {
+  /* Stays in reach down a long gallery. On a phone the room goes to the
+     pictures instead. */
+  .c-nav{
+    position: sticky;
+    top: 0;
+  }
 }
 
 /* Collapsed menu: one link per line, tall enough for a finger. */
 @media screen and (max-width: 991px) {
-  .nav-text{
-    display: block;
-    padding: 10px 0;
-  }
-}
-.gallery-sticker{
-  cursor:pointer;
-  height: 170px;
-  position: relative;
-}
-
-.gallery-img{
-  height: 170px;
-  object-fit: cover;
-}
-
-/* Vue dézoomée gestion : miniatures plus petites pour voir plus de photos */
-.gallery-sticker.compact {
-  height: 80px;
-}
-
-.gallery-img.compact {
-  height: 80px;
-}
-
-/* Mobile : en mode compact, garder le ratio carré comme en mode normal */
-@media screen and (max-width: 575px) {
-  .gallery-sticker.compact {
-    height: auto;
-  }
-
-  .gallery-img.compact {
-    display: block;
-    height: auto;
-    aspect-ratio: 1;
-  }
-}
-
-.galleries-img{
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-}
-
-/* Phones: three square thumbnails per row, two gallery cards per row. */
-@media screen and (max-width: 575px) {
-  .gallery-sticker{
-    height: auto;
-  }
-
-  .gallery-img{
-    display: block;
-    height: auto;
-    aspect-ratio: 1;
-  }
-
-  .galleries-img{
-    display: block;
-    height: auto;
-    aspect-ratio: 4 / 3;
-  }
-}
-
-.pic-modal {
-  position: fixed; /* Stay in place */
-  z-index: 100; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0, 0, 0, 0.85); /* Black w/ opacity */
-}
-
-.pic-modal-content {
-  margin: 5% auto; /* 15% from the top and centered */
-  padding: 20px;
-  width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.add-modal-content {
-  margin: 5% auto; /* 15% from the top and centered */
-  padding: 60px;
-  width: 40%; /* Could be more or less, depending on screen size */
-  background-color: white;
-}
-
-@media screen and (max-width: 767px) {
-  .add-modal-content {
-    width: 92%;
-    padding: 24px;
-  }
-}
-
-.add-modal-textfield{
-  margin-top: 25px !important;
-
-}
-
-.add-modal-create-button{
-  margin-top: 50px !important;
-
-}
-
-.pic-modal-nav{
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%;
-}
-
-.close {
-  cursor: pointer;
-  color: #d8d8d8;
-  float:right;
-  margin-right: 30px;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: rgb(255, 255, 255);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.close-white-modal{
-  cursor: pointer;
-  color: #d8d8d8;
-  float:right;
-  margin-right: 30px;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close-white-modal:hover,
-.close-white-modal:focus {
-  color: rgb(97, 97, 97);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.download{
-  margin-top: 13px;
-  margin-right: 10px;
-  top: 50%;
-  float:right;
-  cursor: pointer;
-  color: #d8d8d8;
-}
-
-.download:hover,
-.download:focus {
-  color: rgb(255, 255, 255);
-  cursor: pointer;
-}
-
-.arrow{
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  /* Above the picture, which spans the full width on a phone. */
-  z-index: 1;
-  cursor: pointer;
-  color: #d8d8d8;
-}
-
-/* Touch screens: bigger targets for the viewer controls. The two-class
-   selectors are there to win over the size MUI gives its icons. */
-@media (pointer: coarse) {
-  .close{
-    font-size: 40px;
-    line-height: 1;
-    padding: 6px 4px;
-    margin-right: 16px;
-  }
-
-  .pic-modal .download{
-    font-size: 2rem;
-    margin-top: 14px;
-    margin-right: 18px;
-  }
-
-  .pic-modal .arrow{
-    font-size: 2.5rem;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
-  }
-}
-
-.left-arrow{
-  margin-left: 10px;
-}
-
-.right-arrow{
-  right:10px;
-}
-
-.arrow:hover,
-.arrow:focus {
-  color: rgb(255, 255, 255);
-  cursor: pointer;
-}
-
-.introductive-content{
-  position: relative;
-}
-
-.add-icon{
-  height: 170px;
-  cursor: pointer;
-  color: #d8d8d8;
-}
-
-.add-icon:hover,
-.add-icon:focus {
-  color:var(--ponthe-yellow);
-  cursor: pointer;
-}
-
-.centered-button{
-  margin-top: 70px;
-  margin-left: auto;
-  margin-right: auto;
-  transform: scale(2);
-  margin-bottom:70px;
-}
-
-.icon{
-  height: 170px;
-  margin-left: 20px;
-  margin-right: 20px;
-  cursor: pointer;
-  color: #d8d8d8;
-}
-
-/* Phones: the doubled toolbar is wider than the screen and pushes its first
-   button out of view. Lay it out at its natural size instead, on two lines if
-   needed, with the icons enlarged on their own. */
-@media screen and (max-width: 767px) {
-  .centered-button{
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+  .c-nav .navbar-collapse{
     margin-top: 10px;
-    margin-bottom: 30px;
-    transform: none;
   }
 
-  .centered-button .icon,
-  .centered-button .add-icon{
-    height: auto;
-    margin: 0 8px;
-    font-size: 2.5rem;
+  .nav-text,
+  .nav-cta{
+    display: block;
+    margin-right: 0;
+    padding: 13px 2px;
+    font-size: 14px;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0;
+  }
+
+  .nav-text::after{
+    display: none;
+  }
+
+  .nav-text.active{
+    color: var(--ponthe-yellow);
+  }
+
+  .nav-cta:hover{
+    background: none;
+    color: white;
   }
 }
 
-.icon:hover,
-.icon:focus {
-  color:var(--ponthe-yellow);
+/* ===== Buttons ===== */
+
+.p-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.gallery-title{
-  margin-top: 50px;
-  margin-bottom: 50px;
-  color: var(--ponthe-blue);
-  text-align: center;
-  font-family: 'Inter';
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  font-size: clamp(32px, 5vw, 48px);
+.p-btn:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-/* Le bouton « Sélectionner » (.select-toggle-icon) est en absolute centré sur 83% :
-   réserve sa zone pour éviter tout chevauchement avec un titre long (retour à la ligne). */
-@media screen and (min-width: 576px) {
-  .gallery-title{
-    max-width: 60%;
-    margin-left: auto;
-    margin-right: auto;
-    overflow-wrap: break-word;
-  }
+.p-btn .MuiSvgIcon-root{
+  font-size: 20px;
 }
 
-.img-modal{
-    position: absolute;
-    max-width: 85%;
-    transform: translate(-50%, -50%);
-    max-height: 90%;
-    top: 50%;
-    left: 50%;
-    object-fit: cover;
-}
-
-@media screen and (max-width: 767px) {
-  .img-modal{
-    max-width: 100%;
-    max-height: 80%;
-  }
-}
-
-/*LOGIN PAGE*/
-.login-logo{
-  position: relative;
-  transform: translateX(-50%);
-  left: 50%;
-  height: 95px;
-  margin-bottom: 30px;
-}
-
-.login-container{
-  border: 1px solid var(--ponthe-gray-border);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  margin-top: 20%;
-  padding-left: 40px;
-  padding-right: 40px;
-  padding-top: 50px;
-  padding-bottom: 50px;
-}
-
-.login-input {
-  /* Sizing */
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  margin: 1rem 0rem;
-  /* Styling */
-  font-size: 1rem;
-  height: 50px;
-  border-radius: 5px;
-  background-color: #d8d8d8;
-  border: none;
-}
-.login-input:hover,
-.login-input:focus{
-  border: none;
-}
-
-.login-button{
-  width:100%;
-  background-color: #8193F2;
-  transition: all 0.2s ease;
-  border: none;
+.p-btn-primary{
+  background: var(--ponthe-blue-dark);
   color: white;
-  font-weight: bold;
-  text-transform: uppercase;
-  border-radius: 5px;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  height: 50px;
 }
 
-.login-button:hover{
-  width:100%;
-  background-color: rgba(104, 126, 240, 1);
+.p-btn-primary:not(:disabled):hover{
+  background: #37469f;
+  color: white;
 }
 
-.login-link{
-  color:rgb(128, 128, 128);
-  text-decoration: underline;
-  font-family: 'Inter';
-  transition: all 0.2s ease;
-  text-underline-offset: 3px;
-}
-
-.login-link:hover{
-  color:#8193F2;
-}
-
-.login-error{
-  background-color: rgb(247, 103, 103);
-  padding-left:10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  font-family: 'Inter';
-  color:white;
-  border-left: 3px solid rgb(255, 0, 0);
-  border-radius: 5px;
-}
-
-/* Messages d'erreur upload (TODO #8) */
-.upload-error{
-  background-color: rgb(247, 103, 103);
-  padding-left:10px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  font-family: 'Inter';
-  color:white;
-  border-left: 3px solid rgb(255, 0, 0);
-  border-radius: 5px;
-}
-
-/* Mode sélection multiple : rond de validation et vignette sélectionnée */
-.gallery-sticker.selected{
-  outline: 4px solid #1976d2;
-  outline-offset: -4px;
-}
-
-.sticker-check{
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: #1976d2;
+.p-btn-ghost{
   background: white;
-  border-radius: 50%;
-  z-index: 5;
-}
-
-.sticker-check-off{
-  color: #9e9e9e;
-}
-
-/* Bouton « Sélectionner » du header de la page galerie :
-   grand, posé aux deux-tiers entre le titre (centré) et le bord droit. */
-/* Two classes, to win over the size and display MUI gives its icons with a
-   single one: with `.select-toggle-icon` alone the icon stayed at 24px. */
-.introductive-content .select-toggle-icon{
-  position: absolute;
-  top: 36px;
-  /* The title takes the middle 60%: at its real size the button, centred on
-     83%, bit into that. */
-  left: 86%;
-  transform: translateX(-50%);
-  cursor: pointer;
-  color: var(--ponthe-blue);
-  font-size: clamp(48px, 7vw, 80px);
-  transition: color 0.2s ease;
-}
-
-.introductive-content .select-toggle-icon:hover{
+  border-color: var(--ponthe-line);
   color: var(--ponthe-blue-dark);
 }
 
-@media screen and (max-width: 575px) {
-  .introductive-content .select-toggle-icon{
-    position: static;
-    transform: none;
-    display: block;
-    margin: 0 auto 16px;
-    font-size: 2.75rem;
-  }
-
-  /* The button sits under the title: no need for the room kept above it. */
-  .gallery-title{
-    margin-bottom: 16px;
-  }
+.p-btn-ghost:not(:disabled):hover{
+  background: var(--ponthe-tint);
+  border-color: var(--ponthe-blue);
 }
 
-/* Barre d'actions de la sélection (compteur + boutons) */
-.selection-bar{
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 16px;
+/* A mode that is switched on. The hover rule is spelled out again: a
+   touch screen keeps "hover" on the button last tapped, and the plain one
+   would turn this white-on-blue button nearly white. */
+.p-btn-ghost.is-on,
+.p-btn-ghost.is-on:not(:disabled):hover{
+  background: var(--ponthe-blue-dark);
+  border-color: var(--ponthe-blue-dark);
+  color: white;
 }
 
-/* Icône dont le mode associé est actif (ex. filtre signalements) */
-.icon-active{
-  color: #1976d2;
+.p-btn-danger{
+  background: white;
+  border-color: #f0cdc8;
+  color: var(--ponthe-red);
 }
 
-/* ===== Page Galeries « Affiche arrondie » (draft fde67747) ===== */
-
-.hero-banner{
-  background-color: var(--ponthe-blue);
-  border-bottom-left-radius: var(--ponthe-radius-banner);
-  border-bottom-right-radius: var(--ponthe-radius-banner);
-  position: relative;
+.p-btn-danger:not(:disabled):hover{
+  background: #fdf2f0;
+  border-color: #e3a399;
 }
 
-.hero-banner-inner{
-  max-width: 1140px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 48px 12px 64px;
+/* ===== Page headers ===== */
+
+.page-head{
+  max-width: var(--ponthe-page-wide);
+  margin: 0 auto;
+  padding: 36px 24px 24px;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px 24px;
 }
 
-.hero-title{
-  font-family: 'Inter';
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  line-height: 0.9;
-  color: white;
-  font-size: clamp(48px, 8vw, 80px);
+.page-head-text{
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.page-back{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ponthe-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.page-back:hover{
+  color: var(--ponthe-blue-dark);
+}
+
+.page-back .MuiSvgIcon-root{
+  font-size: 18px;
+}
+
+.gallery-title,
+.page-header-title{
   margin: 0;
+  color: var(--ponthe-blue-dark);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-size: clamp(28px, 4.2vw, 44px);
+  overflow-wrap: anywhere;
 }
 
-.hero-title-accent{
-  color: var(--ponthe-yellow);
+.page-meta{
+  margin: 8px 0 0;
+  color: var(--ponthe-muted);
+  font-size: 15px;
 }
 
-.year-pills{
+.page-head-actions{
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  padding-bottom: 8px;
 }
 
-.year-pill{
-  height: 40px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 50px;
-  background: white;
-  color: var(--ponthe-blue);
-  font-family: 'Inter';
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.page-header{
+  max-width: var(--ponthe-page);
+  margin: 0 auto;
+  padding: 44px 24px 32px;
 }
 
-.year-pill.active{
-  background: var(--ponthe-yellow);
-  color: black;
-}
-
-.year-pill:not(.active):hover{
-  transform: translateY(-2px);
-}
-
-.year-pill:focus-visible{
-  outline: 3px solid var(--ponthe-yellow);
-  outline-offset: 2px;
-}
-
-.gallery-grid-overlap{
-  max-width: 1140px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: -40px;
-  position: relative;
-  z-index: 10;
-  padding: 0 12px 96px;
-}
-
-.gallery-card-affiche{
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border: 4px solid white;
-  border-radius: var(--ponthe-radius-card);
-  overflow: hidden;
-  text-decoration: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease-out;
-  height: 100%;
-}
-
-.gallery-card-affiche:hover{
-  transform: translate(-4px, -4px);
-  box-shadow: 8px 8px 0 var(--ponthe-blue-deep);
-}
-
-.gallery-image-container{
-  position: relative;
-  width: 100%;
-  height: 240px;
-  overflow: hidden;
-}
-
-.gallery-card-footer-strip{
-  height: 10px;
-  background-color: var(--ponthe-blue);
-}
-
-.gallery-title-label{
-  padding: 12px 16px 8px;
-  font-family: 'Inter';
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--ponthe-blue-dark);
-  margin: 0;
-  letter-spacing: -0.01em;
+.page-empty{
+  max-width: var(--ponthe-page);
+  margin: 0 auto;
+  padding: 0 24px 96px;
+  color: var(--ponthe-muted);
 }
 
 @media screen and (max-width: 575px) {
-  .hero-banner-inner{
-    padding: 32px 12px 48px;
+  .page-head{
+    padding: 24px 16px 18px;
   }
 
-  .year-pills{
-    padding-bottom: 0;
+  .page-header{
+    padding: 28px 16px 20px;
   }
 
-  /* Two cards per row: the picture sets the height, the title gets smaller. */
-  .gallery-image-container{
-    height: auto;
-  }
-
-  .gallery-card-affiche{
-    border-width: 3px;
-  }
-
-  .gallery-title-label{
-    padding: 8px 10px 6px;
-    font-size: 14px;
-    overflow-wrap: anywhere;
+  .page-empty{
+    padding: 0 16px 64px;
   }
 }
 
-/* ===== Accueil « Hero osé sans voile » (draft 6376c5fd) ===== */
+/* ===== Home ===== */
 
 .hero-section{
-  /* 100vh moins la navbar (~64px, en flux au-dessus) : garde le chevron de scroll au-dessus de la fold */
+  /* Viewport minus the navbar, which sits above in the flow: keeps the whole
+     hero, arrow included, above the fold. */
   min-height: calc(100vh - 64px);
   min-height: calc(100svh - 64px);
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
   text-align: center;
-  padding: 120px 16px 48px;
+  padding: 120px 24px 36px;
+  background: var(--ponthe-ink);
+}
+
+.hero-photo{
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+/* A veil that only darkens where the text sits. */
+.hero-section::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(31, 37, 71, 0.2) 0%, rgba(31, 37, 71, 0.05) 32%,
+    rgba(18, 22, 48, 0.55) 68%, rgba(18, 22, 48, 0.88) 100%);
 }
 
 .hero-content{
-  position: relative;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 720px;
 }
 
-.poster-title-container{
-  position: relative;
-  margin-bottom: 32px;
-}
-
-.poster-title{
-  font-family: 'Inter';
-  font-weight: 900;
-  font-size: clamp(56px, 12vw, 120px);
-  line-height: 0.9;
-  letter-spacing: -0.05em;
+.hero-eyebrow{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: white;
-  margin: 0;
-  position: relative;
-  z-index: 10;
-}
-
-.poster-title-outline{
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-family: 'Inter';
-  font-weight: 900;
-  font-size: clamp(56px, 12vw, 120px);
-  line-height: 0.9;
-  letter-spacing: -0.05em;
-  text-transform: uppercase;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--ponthe-yellow);
-  z-index: 5;
-  user-select: none;
-  pointer-events: none;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .badge-hero-yellow{
-  position: absolute;
-  right: -40px;
-  top: -10px;
-  z-index: 20;
-  background-color: var(--ponthe-yellow);
-  color: black;
-  padding: 4px 12px;
-  border-radius: 50px;
-  font-family: 'Inter';
-  font-weight: 900;
-  font-size: 24px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--ponthe-yellow);
+  color: var(--ponthe-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.poster-title{
+  margin: 0;
+  color: white;
+  font-weight: 800;
+  font-size: clamp(56px, 10vw, 112px);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 32px rgba(18, 22, 48, 0.35);
 }
 
 .hero-subtitle{
-  color: white;
-  font-family: 'Inter';
-  font-size: clamp(16px, 2.5vw, 24px);
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  margin: 0 0 48px;
+  margin: 16px 0 32px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 400;
 }
 
 .hero-pills{
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 24px;
+  gap: 14px;
 }
 
 .pill-btn{
-  text-transform: uppercase;
-  padding: 20px 40px;
-  font-family: 'Inter';
-  font-weight: 700;
-  font-size: 20px;
-  border-radius: 50px;
-  border: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pill-btn:hover{
+  transform: translateY(-2px);
 }
 
 .pill-yellow{
-  background-color: var(--ponthe-yellow);
-  color: black;
+  background: var(--ponthe-yellow);
+  color: var(--ponthe-ink);
+  box-shadow: 0 14px 26px -16px rgba(255, 196, 37, 0.95);
 }
 
 .pill-yellow:hover,
 .pill-yellow:focus{
-  background-color: white;
-  color: black;
+  background: #ffd257;
+  color: var(--ponthe-ink);
 }
 
 .pill-white{
-  background-color: white;
-  color: black;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: white;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .pill-white:hover,
 .pill-white:focus{
-  background-color: var(--ponthe-yellow);
-  color: black;
+  background: white;
+  border-color: white;
+  color: var(--ponthe-ink);
 }
 
 @keyframes bounce-slow {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(10px); }
+  50% { transform: translateY(6px); }
 }
 
 .scroll-chevron{
-  color: var(--ponthe-yellow);
-  font-size: 3rem;
-  margin-top: 32px;
-  animation: bounce-slow 2s infinite;
+  display: inline-flex;
+  margin-top: 28px;
+  color: rgba(255, 255, 255, 0.75);
+  animation: bounce-slow 2.4s ease-in-out infinite;
+  transition: color 0.2s ease;
+}
+
+.scroll-chevron:hover{
+  color: white;
+}
+
+.scroll-chevron .MuiSvgIcon-root{
+  font-size: 30px;
+}
+
+/* Narrow or upright screens, phone or tablet: a wide group picture cropped
+   to a tall screen keeps five faces out of twenty, with the title printed
+   across them. The picture goes on top, whole, and the text underneath. */
+@media screen and (max-width: 767px), screen and (orientation: portrait) {
+  .hero-section{
+    min-height: 0;
+    display: block;
+    padding: 0;
+    background: white;
+  }
+
+  /* The proportions of the picture itself: nobody is cut off at the edges. */
+  .hero-photo{
+    position: static;
+    display: block;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .hero-section::after{
+    display: none;
+  }
+
+  .hero-content{
+    max-width: none;
+    padding: 36px 24px 12px;
+  }
+
+  .hero-eyebrow{
+    color: var(--ponthe-muted);
+    margin-bottom: 12px;
+  }
+
+  .poster-title{
+    color: var(--ponthe-blue-dark);
+    font-size: clamp(48px, 17vw, 96px);
+    text-shadow: none;
+  }
+
+  .hero-subtitle{
+    color: var(--ponthe-muted);
+    margin: 12px 0 24px;
+  }
+
+  .pill-white{
+    background: white;
+    border-color: var(--ponthe-line);
+    color: var(--ponthe-blue-dark);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .pill-white:hover,
+  .pill-white:focus{
+    background: var(--ponthe-tint);
+    border-color: var(--ponthe-blue);
+    color: var(--ponthe-blue-dark);
+  }
+
+  /* The team is the next thing on the screen anyway. */
+  .scroll-chevron{
+    display: none;
+  }
+}
+
+@media screen and (max-width: 575px) {
+  .hero-content{
+    padding: 28px 20px 12px;
+  }
+
+  .hero-pills{
+    flex-direction: column;
+    align-self: stretch;
+    gap: 10px;
+  }
+
+  .pill-btn:hover{
+    transform: none;
+  }
+}
+
+/* A phone held sideways: wide enough for the picture behind the text, too
+   short for the room left above it. */
+@media screen and (orientation: landscape) and (max-height: 520px) {
+  .hero-section{
+    padding-top: 28px;
+    padding-bottom: 20px;
+  }
+
+  .poster-title{
+    font-size: 56px;
+  }
+
+  .hero-eyebrow{
+    margin-bottom: 10px;
+  }
+
+  .hero-subtitle{
+    margin: 8px 0 18px;
+  }
+
+  .scroll-chevron{
+    display: none;
+  }
 }
 
 .team-section{
   background: white;
-  overflow: hidden;
-  padding: 96px 16px 0;
+  padding: 88px 24px 96px;
+  /* The navbar is stuck to the top on a wide screen: land below it. */
+  scroll-margin-top: var(--ponthe-nav);
 }
 
 .team-section-inner{
-  max-width: 1152px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.team-img-rounded{
-  border-radius: 24px;
-  width: 100%;
-  aspect-ratio: 21 / 9;
-  object-fit: cover;
-  transform: rotate(-1deg);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  margin-bottom: 80px;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 .team-section-title{
+  margin: 0 0 48px;
   text-align: center;
-  font-family: 'Inter';
-  font-weight: 900;
-  font-size: clamp(32px, 5vw, 48px);
-  color: var(--ponthe-blue);
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  margin: 0 0 64px;
+  color: var(--ponthe-blue-dark);
+  font-weight: 800;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -0.03em;
+}
+
+/* The accent of the house, as a short rule under a title. */
+.team-section-title::after{
+  content: "";
+  display: block;
+  width: 44px;
+  height: 4px;
+  margin: 18px auto 0;
+  border-radius: 4px;
+  background: var(--ponthe-yellow);
 }
 
 .roster-grid{
   display: grid;
   grid-template-columns: 1fr;
-  gap: 48px;
-  padding-bottom: 96px;
+  gap: 32px;
 }
 
 @media screen and (min-width: 768px) {
   .roster-grid{
     grid-template-columns: 1fr 1fr;
+    gap: 40px;
   }
 }
 
@@ -840,96 +652,951 @@ body{
 }
 
 .roster-group-title{
-  font-family: 'Inter';
+  margin: 0 0 12px;
+  color: var(--ponthe-muted);
   font-size: 12px;
   font-weight: 700;
-  color: #9e9e9e;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin: 0 0 16px;
 }
 
 .roster-group-title:not(:first-child){
-  margin-top: 48px;
+  margin-top: 32px;
 }
 
 .roster-card-item{
-  border: 1px solid var(--ponthe-gray-border);
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s ease;
+  padding: 8px 22px;
+  border-radius: var(--ponthe-radius);
+  background: var(--ponthe-tint);
 }
 
-.roster-card-item:hover{
-  border-color: var(--ponthe-blue);
-  box-shadow: 0 4px 12px rgba(129, 147, 242, 0.1);
-}
-
+/* A role on the left, a name on the right, a hairline between two lines. */
 .roster-card-item p{
-  margin: 0 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--ponthe-line);
+  font-weight: 600;
+  text-align: right;
 }
 
 .roster-card-item p:last-child{
-  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .roster-card-item strong{
-  color: #212529;
+  flex: none;
+  color: var(--ponthe-muted);
+  font-weight: 500;
+  text-align: left;
 }
 
-.roster-subtitle{
+.roster-card-item p.roster-subtitle{
+  display: block;
+  padding-bottom: 4px;
+  border-bottom: none;
+  color: var(--ponthe-ink);
+  font-size: 16px;
   font-weight: 700;
-  font-size: 18px;
-  color: #212529;
+  text-align: left;
 }
 
-.roster-names{
-  color: #6c757d;
-  font-size: 14px;
-  line-height: 1.6;
+.roster-card-item p.roster-names{
+  display: block;
+  padding-top: 0;
+  color: var(--ponthe-muted);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+  text-align: left;
 }
 
 .site-footer{
+  padding: 28px 16px;
+  border-top: 1px solid var(--ponthe-line);
   background: white;
-  padding: 48px 16px;
+  color: var(--ponthe-muted);
+  font-size: 13px;
   text-align: center;
-  color: #9e9e9e;
-  font-size: 14px;
-  border-top: 1px solid #f1f1f1;
+}
+
+.site-footer p{
+  margin: 0;
 }
 
 @media screen and (max-width: 575px) {
-  .badge-hero-yellow{
-    right: 0;
-    font-size: 18px;
+  .team-section{
+    padding: 48px 16px 64px;
   }
 
-  .pill-btn{
-    padding: 16px 28px;
-    font-size: 16px;
+  .team-section-title{
+    margin-bottom: 32px;
+  }
+
+  .roster-card-item{
+    padding: 6px 16px;
   }
 }
 
-/* ===== Diffusion du style vers les pages non redessinées ===== */
+/* ===== Lists of galleries ===== */
 
-.page-header{
-  max-width: 1140px;
+.hero-banner{
+  position: relative;
+  background-color: var(--ponthe-blue);
+  background-image: radial-gradient(900px 320px at 12% -30%, rgba(255, 255, 255, 0.24), transparent 65%);
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+}
+
+.hero-banner-inner{
+  max-width: var(--ponthe-page);
   margin: 0 auto;
-  padding: 48px 12px 32px;
+  padding: 44px 24px 88px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px 32px;
 }
 
-.page-header-title{
-  font-family: 'Inter';
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.04em;
-  color: var(--ponthe-blue);
-  font-size: clamp(40px, 6vw, 56px);
+.hero-title{
   margin: 0;
+  color: white;
+  font-weight: 800;
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.hero-count{
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+}
+
+.year-pills{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.year-pill{
+  flex: none;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.year-pill:not(.active):hover{
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.year-pill.active{
+  background: var(--ponthe-yellow);
+  border-color: var(--ponthe-yellow);
+  color: var(--ponthe-ink);
+}
+
+.year-pill:focus-visible{
+  outline: 3px solid white;
+  outline-offset: 2px;
+}
+
+.gallery-grid-overlap{
+  position: relative;
+  z-index: 10;
+  max-width: var(--ponthe-page);
+  margin: -56px auto 0;
+  padding: 0 12px 80px;
+}
+
+.gallery-grid-plain{
+  max-width: var(--ponthe-page-wide);
+  margin: 0 auto;
+  padding: 0 12px 80px;
+}
+
+.gallery-grid-empty{
+  margin: 0;
+  padding: 72px 12px 24px;
+  color: var(--ponthe-muted);
+  text-align: center;
+}
+
+.gallery-card-affiche{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--ponthe-radius);
+  background: white;
+  box-shadow: var(--ponthe-shadow);
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.gallery-image-container{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--ponthe-tint);
+}
+
+.galleries-img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.gallery-title-label{
+  margin: 0;
+  padding: 14px 16px 16px;
+  color: var(--ponthe-ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .gallery-card-affiche:hover{
+    transform: translateY(-4px);
+    box-shadow: var(--ponthe-shadow-raised);
+  }
+
+  .gallery-card-affiche:hover .galleries-img{
+    transform: scale(1.04);
+  }
+
+  .gallery-card-affiche:hover .gallery-title-label{
+    color: var(--ponthe-blue-dark);
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .hero-banner{
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+  }
+
+  .hero-banner-inner{
+    padding: 28px 16px 72px;
+    gap: 18px;
+  }
+
+  /* Years on one line that slides, however many there are. */
+  .year-pills{
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    width: calc(100% + 32px);
+    margin: 0 -16px;
+    padding: 2px 16px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .year-pills::-webkit-scrollbar{
+    display: none;
+  }
+
+  .gallery-grid-overlap{
+    margin-top: -48px;
+    padding: 0 4px 56px;
+  }
+
+  .gallery-grid-plain{
+    padding: 0 4px 56px;
+  }
+
+  .gallery-title-label{
+    padding: 10px 12px 12px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ===== A gallery: grid of pictures ===== */
+
+/* Bootstrap's container, with the same side padding as the page header so
+   the first thumbnail lines up with the title. */
+.photo-grid{
+  max-width: var(--ponthe-page-wide);
+  margin: 0 auto;
+  padding: 0 24px 72px;
+}
+
+/* Room for the selection bar, which floats over the bottom of the page. */
+.photo-grid.with-selection-bar{
+  padding-bottom: 150px;
+}
+
+.gallery-sticker{
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  background: var(--ponthe-tint);
+  cursor: pointer;
+}
+
+.gallery-img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease, filter 0.2s ease;
+}
+
+.gallery-sticker.compact{
+  border-radius: 3px;
+}
+
+@media (hover: hover) {
+  .gallery-sticker:hover .gallery-img{
+    transform: scale(1.04);
+    filter: brightness(1.06);
+  }
+}
+
+/* Phones: square thumbnails, three per row. */
+@media screen and (max-width: 575px) {
+  /* Nearly edge to edge: the pictures get the width of the screen. */
+  .photo-grid{
+    padding: 0 8px 56px;
+  }
+
+  .gallery-sticker{
+    aspect-ratio: 1;
+    border-radius: 4px;
+  }
+}
+
+/* Selection: the picture steps back inside its frame. */
+.gallery-sticker.selected{
+  outline: 3px solid var(--ponthe-blue-dark);
+  outline-offset: -3px;
+}
+
+.gallery-sticker.selected .gallery-img,
+.gallery-sticker.selected:hover .gallery-img{
+  transform: scale(0.9);
+  border-radius: 4px;
+  filter: none;
+}
+
+.sticker-check{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  display: flex;
+  border-radius: 50%;
+  background: white;
+  color: var(--ponthe-blue-dark);
+  box-shadow: 0 1px 4px rgba(18, 22, 48, 0.3);
+}
+
+.sticker-check-off{
+  background: rgba(31, 37, 71, 0.3);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: none;
+}
+
+/* Count and actions of the selection, within reach of the thumb: a pill in
+   the middle of a wide screen, the full width of a phone. */
+.selection-bar{
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 40;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 9px 9px 9px 22px;
+  border-radius: 999px;
+  background: var(--ponthe-ink);
+  color: white;
+  font-size: 15px;
+  box-shadow: 0 20px 44px -16px rgba(18, 22, 48, 0.7);
+}
+
+.selection-bar-count{
+  margin-right: 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.selection-bar .p-btn-primary{
+  background: var(--ponthe-yellow);
+  color: var(--ponthe-ink);
+}
+
+.selection-bar .p-btn-primary:not(:disabled):hover{
+  background: #ffd257;
+  color: var(--ponthe-ink);
+}
+
+.selection-bar .p-btn-ghost,
+.selection-bar .p-btn-danger{
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: white;
+}
+
+.selection-bar .p-btn-ghost:not(:disabled):hover{
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.selection-bar .p-btn-danger:not(:disabled):hover{
+  background: var(--ponthe-red);
+  border-color: var(--ponthe-red);
+}
+
+@media screen and (max-width: 767px) {
+  .selection-bar{
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: none;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .selection-bar-count{
+    flex: 1 0 100%;
+    margin: 0 0 2px;
+    text-align: center;
+  }
+
+  .selection-bar .p-btn{
+    flex: 1 1 auto;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+}
+
+/* ===== Picture viewer and dialogs ===== */
+
+.pic-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: auto;
+  background-color: rgba(14, 17, 36, 0.94);
+}
+
+.pic-modal-nav{
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(14, 17, 36, 0.75), rgba(14, 17, 36, 0));
+}
+
+.pic-modal-nav a{
+  display: flex;
+}
+
+.pic-counter{
+  margin-right: auto;
+  padding-left: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.close,
+.pic-modal .download,
+.pic-modal .arrow{
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.close:hover,
+.close:focus,
+.pic-modal .download:hover,
+.pic-modal .download:focus,
+.pic-modal .arrow:hover,
+.pic-modal .arrow:focus{
+  background: rgba(255, 255, 255, 0.26);
+  color: white;
+}
+
+.close{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.pic-modal .download{
+  display: block;
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+}
+
+.pic-modal .arrow{
+  position: fixed;
+  top: 50%;
+  /* Above the picture, which spans the full width on a phone. */
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  padding: 11px;
+  transform: translateY(-50%);
+}
+
+.left-arrow{
+  left: 16px;
+}
+
+.right-arrow{
+  right: 16px;
+}
+
+.pic-modal-content {
+  width: 80%;
+  margin: 5% auto;
+  padding: 20px;
+}
+
+.img-modal{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(88vw, 1600px);
+  max-height: 84vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.85);
+}
+
+@media screen and (max-width: 767px) {
+  .img-modal{
+    max-width: 100vw;
+    max-height: 78vh;
+    border-radius: 0;
+  }
+
+  .pic-modal .arrow{
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    background: rgba(14, 17, 36, 0.45);
+  }
+
+  .left-arrow{
+    left: 8px;
+  }
+
+  .right-arrow{
+    right: 8px;
+  }
+}
+
+/* White dialogs shown over the same backdrop. */
+.add-modal-content {
+  position: relative;
+  width: min(480px, calc(100% - 32px));
+  margin: 9vh auto 32px;
+  padding: 32px;
+  border-radius: 18px;
+  background-color: white;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+}
+
+.add-modal-content.add-modal-wide{
+  width: min(680px, calc(100% - 32px));
+}
+
+.add-modal-title{
+  margin: 0 40px 6px 0;
+  color: var(--ponthe-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.add-modal-lead{
+  margin: 0 0 20px;
+  color: var(--ponthe-muted);
+  font-size: 14px;
+}
+
+.add-modal-field{
+  display: block;
+  margin-top: 16px;
+}
+
+.add-modal-label{
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ponthe-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.add-modal-error{
+  margin: 14px 0 0;
+  color: var(--ponthe-red);
+  font-size: 14px;
+}
+
+.add-modal-error:empty{
+  display: none;
+}
+
+.add-modal-actions{
+  display: flex;
+  margin-top: 24px;
+}
+
+.add-modal-actions .p-btn{
+  flex: 1;
+}
+
+.close-white-modal{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--ponthe-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.close-white-modal:hover,
+.close-white-modal:focus {
+  background: var(--ponthe-tint);
+  color: var(--ponthe-ink);
+}
+
+/* MUI fields inside a dialog, in the colours of the house. */
+.add-modal-content .MuiOutlinedInput-root{
+  border-radius: 12px;
+  font-family: inherit;
+}
+
+.add-modal-content .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline{
+  border-color: var(--ponthe-line);
+  border-width: 1.5px;
+}
+
+.add-modal-content .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.add-modal-content .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: var(--ponthe-blue);
+}
+
+.file-drop{
+  display: block;
+  width: 100%;
+  padding: 18px;
+  border: 1.5px dashed var(--ponthe-blue);
+  border-radius: 12px;
+  background: var(--ponthe-tint);
+  color: var(--ponthe-ink);
+  font-size: 14px;
+}
+
+.file-drop::file-selector-button{
+  margin-right: 12px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--ponthe-line);
+  border-radius: 999px;
+  background: white;
+  color: var(--ponthe-blue-dark);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-error,
+.upload-error{
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border: 1px solid #f0cdc8;
+  border-radius: 10px;
+  background: #fdf2f0;
+  color: var(--ponthe-red);
+  font-size: 14px;
+}
+
+@media screen and (max-width: 575px) {
+  .add-modal-content {
+    margin-top: 5vh;
+    padding: 24px 20px;
+  }
+}
+
+/* ===== Management ===== */
+
+.toolbar{
+  max-width: var(--ponthe-page-wide);
+  margin: 0 auto;
+  padding: 0 24px 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-group{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Pushes what follows to the far end of the line. */
+.toolbar-end{
+  margin-left: auto;
+}
+
+.toolbar .MuiOutlinedInput-root{
+  height: 42px;
+  border-radius: 999px;
+  background: white;
+  color: var(--ponthe-blue-dark);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.toolbar .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline{
+  border-color: var(--ponthe-line);
+  border-width: 1.5px;
+}
+
+.toolbar .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.toolbar .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: var(--ponthe-blue);
+}
+
+.toolbar .MuiSelect-select{
+  padding-left: 18px;
+}
+
+@media screen and (max-width: 575px) {
+  .toolbar{
+    padding: 0 16px 16px;
+  }
+
+  /* Icons alone would not say what they do: keep the words, tighten them. */
+  .toolbar .p-btn{
+    height: 40px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .toolbar-end{
+    margin-left: 0;
+  }
+}
+
+/* ===== Login ===== */
+
+.login-page{
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: radial-gradient(900px 520px at 50% -12%, rgba(129, 147, 242, 0.32), transparent 70%),
+    var(--ponthe-tint);
+}
+
+.login-container{
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 32px 28px;
+  border: 1px solid var(--ponthe-line);
+  border-radius: 20px;
+  background: white;
+  box-shadow: var(--ponthe-shadow);
+}
+
+.login-logo{
+  display: block;
+  height: 84px;
+  width: auto;
+  margin: 0 auto 20px;
+}
+
+.login-title{
+  margin: 0 0 6px;
+  color: var(--ponthe-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.login-lead{
+  margin: 0 0 24px;
+  color: var(--ponthe-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-input {
+  width: 100%;
+  height: 48px;
+  margin: 0 0 12px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ponthe-line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ponthe-ink);
+  /* 16px at least: below that, iOS zooms into the field. */
+  font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-input::placeholder{
+  color: #9aa0bd;
+}
+
+.login-input:focus{
+  outline: none;
+  border-color: var(--ponthe-blue);
+  box-shadow: 0 0 0 4px rgba(129, 147, 242, 0.22);
+}
+
+.login-button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  border: 1.5px solid var(--ponthe-blue-dark);
+  border-radius: 12px;
+  background: var(--ponthe-blue-dark);
+  color: white;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.login-button:hover{
+  background: #37469f;
+  border-color: #37469f;
+  color: white;
+}
+
+.login-button.login-button-quiet{
+  border-color: var(--ponthe-line);
+  background: white;
+  color: var(--ponthe-blue-dark);
+}
+
+.login-button.login-button-quiet:hover{
+  border-color: var(--ponthe-blue);
+  background: var(--ponthe-tint);
+  color: var(--ponthe-blue-dark);
+}
+
+.login-separator{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 18px;
+  color: var(--ponthe-muted);
+  font-size: 13px;
+}
+
+.login-separator::before,
+.login-separator::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ponthe-line);
+}
+
+.login-form .login-error{
+  margin: 0 0 12px;
+}
+
+.login-link{
+  display: block;
+  margin-top: 20px;
+  color: var(--ponthe-muted);
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-link:hover{
+  color: var(--ponthe-blue-dark);
+}
+
+@media screen and (max-width: 575px) {
+  .login-container{
+    padding: 32px 22px 24px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .scroll-chevron{
     animation: none;
+  }
+
+  .gallery-card-affiche,
+  .galleries-img,
+  .gallery-img,
+  .pill-btn{
+    transition: none;
   }
 }

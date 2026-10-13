@@ -19,7 +19,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import ListIcon from '@mui/icons-material/List';
-import {Stack, Select, MenuItem} from '@mui/material';
+import {Select, MenuItem} from '@mui/material';
 
 export default function Gallery({props}){
 
@@ -403,59 +403,84 @@ export default function Gallery({props}){
     return (
       <>
       <CustomNavbar/>
-      <div className="introductive-content">
-        <h1 className="gallery-title">{name}</h1>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <span className='centered-button'>
-              <AddCircleOutlineIcon className="icon" onClick={openAddModal}/>
-              <DeleteIcon onClick={deleteGallery} className="icon"/>
-              <FlagIcon onClick={toggleReportsOnly}
-                className={'icon' + (reportsOnly ? ' icon-active' : '')}
-                titleAccess={reportsOnly ? 'Afficher toutes les photos' : 'Photos signalées'}/>
-              {reportsOnly && (
-                <ListIcon className="icon" onClick={loadReports} titleAccess="Détails des signalements"/>
-              )}
-              <ChecklistIcon className="icon" onClick={toggleSelectionMode}
-                titleAccess={selectionMode ? 'Quitter le mode sélection' : 'Sélectionner des photos'}/>
-              {isCompact
-                ? <ZoomInIcon className="icon" onClick={toggleCompact} titleAccess="Vue normale"/>
-                : <ZoomOutIcon className="icon" onClick={toggleCompact} titleAccess="Vue dézoomée"/>
-              }
-              <Select style={{padding:0, height: "40px"}}value={visibility} onChange={e =>
-              {
-                setVisibility(e.target.value)
-                changeVisibility(e.target.value)
-              }} label="Visibilité">
-                  <MenuItem value={'privée'}>Privée</MenuItem>
-                  <MenuItem value={'école'}>École</MenuItem>
-                  <MenuItem value={'publique'}>Publique</MenuItem>
-                </Select>
-                <Select style={{padding:0, height: "40px"}}value={view} onChange={e =>
-              {
-                setView(e.target.value)
-                changeView(e.target.value)
-              }} label="Vue">
-                  <MenuItem value={'galerie'}>Galerie</MenuItem>
-                  <MenuItem value={'exposition'}>Exposition</MenuItem>
-                </Select>
-              </span>
-          </Stack>
-        {selectionMode && (
-          <div className="selection-bar">
-            <span aria-live="polite">{selected.size} photo(s) sélectionnée(s)</span>
-            <button type="button" className="login-button" onClick={downloadSelected}
-              disabled={selected.size === 0}>
-              Télécharger la sélection
-            </button>
-            <button type="button" className="login-button" onClick={deleteSelected}
-              disabled={selected.size === 0}>
-              Supprimer la sélection
-            </button>
-          </div>
-        )}
+      <div className="page-head">
+        <div className="page-head-text">
+          <a className="page-back" href="/gestion"><ArrowBackIcon/>Gestion</a>
+          <h1 className="gallery-title">{name}</h1>
+          <p className="page-meta">
+            {picsData.length} photo{picsData.length > 1 ? 's' : ''}
+            {reportsOnly && ' · ' + displayedPics.length + ' signalée' + (displayedPics.length > 1 ? 's' : '')}
+          </p>
         </div>
-        <Container fluid>
-          <Row className='g-1'>
+        <div className="page-head-actions">
+          <button type="button" className="p-btn p-btn-primary" onClick={openAddModal}>
+            <AddCircleOutlineIcon/>
+            Ajouter des photos
+          </button>
+        </div>
+      </div>
+      <div className="toolbar">
+        <button type="button" className={'p-btn p-btn-ghost' + (selectionMode ? ' is-on' : '')}
+          aria-pressed={selectionMode} onClick={toggleSelectionMode}>
+          <ChecklistIcon titleAccess={selectionMode ? 'Quitter le mode sélection' : 'Sélectionner des photos'}/>
+          {selectionMode ? 'Terminer' : 'Sélectionner'}
+        </button>
+        <button type="button" className={'p-btn p-btn-ghost' + (reportsOnly ? ' is-on' : '')}
+          aria-pressed={reportsOnly} onClick={toggleReportsOnly}>
+          <FlagIcon className={reportsOnly ? 'icon-active' : ''}
+            titleAccess={reportsOnly ? 'Afficher toutes les photos' : 'Photos signalées'}/>
+          Signalées
+        </button>
+        {reportsOnly && (
+          <button type="button" className="p-btn p-btn-ghost" onClick={loadReports}>
+            <ListIcon titleAccess="Détails des signalements"/>
+            Détails
+          </button>
+        )}
+        <button type="button" className="p-btn p-btn-ghost" onClick={toggleCompact}>
+          {isCompact
+            ? <ZoomInIcon titleAccess="Vue normale"/>
+            : <ZoomOutIcon titleAccess="Vue dézoomée"/>
+          }
+          {isCompact ? 'Agrandir' : 'Réduire'}
+        </button>
+        <Select value={visibility} aria-label="Visibilité" onChange={e =>
+          {
+            setVisibility(e.target.value)
+            changeVisibility(e.target.value)
+          }}>
+          <MenuItem value={'privée'}>Privée</MenuItem>
+          <MenuItem value={'école'}>École</MenuItem>
+          <MenuItem value={'publique'}>Publique</MenuItem>
+        </Select>
+        <Select value={view} aria-label="Vue" onChange={e =>
+          {
+            setView(e.target.value)
+            changeView(e.target.value)
+          }}>
+          <MenuItem value={'galerie'}>Galerie</MenuItem>
+          <MenuItem value={'exposition'}>Exposition</MenuItem>
+        </Select>
+        <button type="button" className="p-btn p-btn-danger toolbar-end" onClick={deleteGallery}>
+          <DeleteIcon/>
+          Supprimer la galerie
+        </button>
+      </div>
+      {selectionMode && (
+        <div className="selection-bar">
+          <span className="selection-bar-count" aria-live="polite">{selected.size} photo(s) sélectionnée(s)</span>
+          <button type="button" className="p-btn p-btn-primary" onClick={downloadSelected}
+            disabled={selected.size === 0}>
+            Télécharger la sélection
+          </button>
+          <button type="button" className="p-btn p-btn-danger" onClick={deleteSelected}
+            disabled={selected.size === 0}>
+            Supprimer la sélection
+          </button>
+        </div>
+      )}
+        <Container fluid className={'photo-grid' + (selectionMode ? ' with-selection-bar' : '')}>
+          <Row className='g-1 g-sm-2'>
             {displayedPics.map((pic, index) => (
               <Col key={index} xs={isCompact ? "3" : "4"} sm={isCompact ? "2" : "3"} lg={isCompact ? "1" : "2"}>
                 <GallerySticker img={pic.link + '/uploads/' + pic.file_full_name}
@@ -478,7 +503,8 @@ export default function Gallery({props}){
             <div className="pic-modal-nav">
               <span className='close' onClick={closeModal}>&times;</span>
               <a href={current} download={current}><span ref={ref4}><DownloadIcon className="download"/></span></a>
-              <span ref={ref5}><DeleteIcon onClick={deleteCurrent} className="download" /></span>
+              <span ref={ref5}><DeleteIcon onClick={deleteCurrent} className="download" titleAccess="Supprimer cette photo" /></span>
+              <span className="pic-counter">{pics.indexOf(current) + 1} / {pics.length}</span>
             </div>
             <div className='pic-modal-content'>
               <div ref={ref} className="img-browser">
@@ -493,21 +519,27 @@ export default function Gallery({props}){
           <div className='pic-modal'>
             <div ref={ref} className='add-modal-content'>
               <span className='close-white-modal' onClick={closeAddModal}>&times;</span>
+              <h2 className="add-modal-title">Ajouter des photos</h2>
+              <p className="add-modal-lead">Une archive .zip, de 2 Go au plus. Les photos apparaissent une fois l'archive traitée.</p>
               <form className="post-form" onSubmit={handleUpload}>
                   <input
+                    className="file-drop"
                     type='file'
                     name='zipfile'
                     accept='.zip'
+                    aria-label="Archive .zip à envoyer"
                     onChange={(e) => setSelectedFile(e.target.files[0] || null)}
                   />
                   {uploadError && <p className="upload-error" role="alert">{uploadError}</p>}
-                  <button
-                    type="submit"
-                    className="login-button"
-                    disabled={uploading}
-                  >
-                    {uploading ? 'Envoi en cours...' : "Lancer l'envoi"}
-                  </button>
+                  <div className="add-modal-actions">
+                    <button
+                      type="submit"
+                      className="p-btn p-btn-primary"
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Envoi en cours...' : "Lancer l'envoi"}
+                    </button>
+                  </div>
                 </form>
             </div>
           </div>
@@ -517,9 +549,9 @@ export default function Gallery({props}){
         {/* ref est partagé entre les modals : un seul est ouvert à la fois, comme l'add-modal. */}
         {reports !== null && (
           <div className='pic-modal'>
-            <div ref={ref} className='add-modal-content'>
+            <div ref={ref} className='add-modal-content add-modal-wide'>
               <span className='close-white-modal' onClick={() => setReports(null)}>&times;</span>
-              <h3>Signalements</h3>
+              <h3 className="add-modal-title">Signalements</h3>
               <ReportList reports={reports} onDismiss={dismissReport}/>
             </div>
           </div>

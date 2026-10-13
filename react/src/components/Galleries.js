@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Cookies from 'js-cookie';
 import CustomNavbar from './Navbar';
 import GalleryMosaic from './GalleryMosaic';
+import Footer from './Footer';
 
 export default function Galleries(props) {
   const [years, setYears] = useState([]);
@@ -42,18 +43,22 @@ export default function Galleries(props) {
       );
   }, [])
 
-  const titleStart = props.view === 'exposition' ? 'EXPOS' : 'GAL';
-  const titleEnd = props.view === 'exposition' ? 'ITIONS' : 'ERIES';
+  const title = props.view === 'exposition' ? 'Expositions' : 'Galeries';
+  const count = Object.values(result || {}).filter(gallery => gallery.year == year).length;
 
   return (
       <>
         <CustomNavbar/>
         <div className="hero-banner">
           <div className="hero-banner-inner">
-            <h1 className="hero-title">
-              <span className="visually-hidden">{titleStart + titleEnd}</span>
-              <span aria-hidden="true">{titleStart}<span className="hero-title-accent">{titleEnd}</span></span>
-            </h1>
+            <div>
+              <h1 className="hero-title">{title}</h1>
+              {year && (
+                <p className="hero-count">
+                  {count} {props.view === 'exposition' ? 'exposition' : 'galerie'}{count > 1 ? 's' : ''} en {year}
+                </p>
+              )}
+            </div>
             <div className="year-pills">
               {years.map(y => (
                 <button key={y} type="button"
@@ -69,6 +74,7 @@ export default function Galleries(props) {
         <div className="gallery-grid-overlap">
           {year && <GalleryMosaic result={result} year={year}/>}
         </div>
+        <Footer/>
       </>
     )
 }

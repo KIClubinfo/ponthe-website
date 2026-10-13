@@ -1,5 +1,6 @@
 import React from 'react'
 import CustomNavbar from './Navbar'
+import Footer from './Footer'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import './../App.css';
 
@@ -9,21 +10,16 @@ export default function HomePage (){
         <>
             <CustomNavbar/>
             <main>
-                <section
-                    className="hero-section"
-                    style={{
-                        backgroundImage:
-                            "linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0.75) 100%), url('/static/assets/img/028_group.jpg')",
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                    }}
-                >
+                {/* The picture is an element, not a background: on a wide
+                    screen it fills the section behind the text, on a phone
+                    it sits above it, whole. The stylesheet does the rest. */}
+                <section className="hero-section">
+                    <img className="hero-photo" src="/static/assets/img/028_group.jpg" alt="L'équipe du Ponthé 028"/>
                     <div className="hero-content">
-                        <div className="poster-title-container">
-                            <div className="badge-hero-yellow">028</div>
-                            <h1 className="poster-title">PONTHÉ</h1>
-                            <div className="poster-title-outline" aria-hidden="true">PONTHÉ</div>
-                        </div>
+                        <p className="hero-eyebrow">
+                            Équipe <span className="badge-hero-yellow">028</span>
+                        </p>
+                        <h1 className="poster-title">Ponthé</h1>
                         <p className="hero-subtitle">Club photo &amp; vidéo de l'École des Ponts</p>
                         <div className="hero-pills">
                             <a className="pill-btn pill-yellow" href="/galleries">Accéder aux galeries</a>
@@ -35,10 +31,8 @@ export default function HomePage (){
                     </div>
                 </section>
 
-                <a name="team"></a>
-                <section className="team-section">
+                <section className="team-section" id="team">
                     <div className="team-section-inner">
-                        <img className="team-img-rounded" src="/static/assets/img/028_group.jpg" alt="L'équipe Ponthé 028"/>
                         <h2 className="team-section-title">L'équipe</h2>
                         <div className="roster-grid">
                             <div className="roster-column">
@@ -69,9 +63,7 @@ export default function HomePage (){
                     </div>
                 </section>
             </main>
-            <footer className="site-footer">
-                <p>© 2026 Club Ponthé — École nationale des ponts et chaussées</p>
-            </footer>
+            <Footer/>
         </>
     )
 }

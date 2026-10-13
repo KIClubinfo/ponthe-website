@@ -37,7 +37,6 @@ const PictureMosaic = (props) => {
 
     //Goto next picture in modal
     const nextPicture = () => {
-        console.log(pics)
         let nextId = pics.indexOf(current) + 1;
         if (nextId == pics.length) nextId = 0
         setCurrent(pics[nextId]);
@@ -150,8 +149,8 @@ const PictureMosaic = (props) => {
 
     return (
         <>
-            <Container fluid>
-                <Row className='g-1'>
+            <Container fluid className={'photo-grid' + (props.selectionMode ? ' with-selection-bar' : '')}>
+                <Row className='g-1 g-sm-2'>
                     {files.map((file, index) => (
                         <Col key={index} xs="4" sm="3" lg="2">
                             <GallerySticker img={file.link + '/uploads/' + file.file_full_name}
@@ -173,8 +172,10 @@ const PictureMosaic = (props) => {
                         <span className='close' onClick={closeModal}>&times;</span>
                         <a href={current} download={current}><span ref={ref4}><DownloadIcon className="download" /></span></a>
                         {is_authenticated && (
-                            <span ref={ref5}><FlagIcon className="download report-flag" onClick={() => setReportOpen(true)} /></span>
+                            <span ref={ref5}><FlagIcon className="download report-flag" onClick={() => setReportOpen(true)}
+                                titleAccess="Signaler la photo" /></span>
                         )}
+                        <span className="pic-counter">{pics.indexOf(current) + 1} / {pics.length}</span>
                     </div>
                     <div className='pic-modal-content' onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
                         <div ref={ref} className="img-browser">

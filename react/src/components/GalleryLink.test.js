@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import GalleryLink from './GalleryLink';
 
-describe('GalleryLink (carte affiche arrondie)', () => {
+describe('GalleryLink (carte d\'une galerie)', () => {
   const props = { link: '/gallery/gala', sticker: '/media/gala/t.jpg', title: 'Gala' };
 
   test('renders a card link with the gallery slug as href', () => {
@@ -12,12 +12,13 @@ describe('GalleryLink (carte affiche arrondie)', () => {
     expect(card).toHaveAttribute('href', '/gallery/gala');
   });
 
-  test('renders the photo, the pervenche strip and the title under the photo', () => {
+  test('renders the photo and the title under the photo', () => {
     const { container } = render(<GalleryLink {...props} />);
     const img = container.querySelector('.galleries-img');
     expect(img).toHaveAttribute('src', '/media/gala/t.jpg');
     expect(img).toHaveAttribute('alt', 'Gala');
-    expect(container.querySelector('.gallery-card-footer-strip')).toBeInTheDocument();
+    // Far down a long list: no need to fetch it before it comes into view.
+    expect(img).toHaveAttribute('loading', 'lazy');
     expect(screen.getByText('Gala')).toHaveClass('gallery-title-label');
   });
 

@@ -4,13 +4,20 @@ import HomePage from './HomePage';
 
 jest.mock('./Navbar', () => () => <div data-testid="mock-navbar" />);
 
-describe('HomePage (hero osé sans voile)', () => {
-  test('renders the poster title PONTHÉ twice (fill + yellow outline)', () => {
+describe('HomePage', () => {
+  test('renders the title once, as the heading of the page', () => {
     render(<HomePage />);
-    const titles = screen.getAllByText('PONTHÉ');
-    expect(titles.length).toBe(2);
-    expect(titles[0].className).toContain('poster-title');
-    expect(titles[1].className).toContain('poster-title-outline');
+    expect(screen.getByRole('heading', { level: 1, name: 'Ponthé' })).toHaveClass('poster-title');
+  });
+
+  test('the group picture is an image of the page, not a background', () => {
+    // The stylesheet lays it behind the text on a wide screen and above it,
+    // whole, on a phone: that takes an element.
+    render(<HomePage />);
+    const photo = screen.getByAltText("L'équipe du Ponthé 028");
+    expect(photo).toHaveClass('hero-photo');
+    expect(photo.closest('.hero-section')).toBeInTheDocument();
+    expect(document.querySelectorAll('img').length).toBe(1);
   });
 
   test('renders the yellow 028 badge', () => {
@@ -50,6 +57,8 @@ describe('HomePage (hero osé sans voile)', () => {
     expect(screen.getByText('Pôle Création')).toBeInTheDocument();
     expect(screen.getByText(/Présidente/)).toBeInTheDocument();
     expect(document.querySelectorAll('.roster-card-item').length).toBe(3);
+    // Where the "Équipe" link of the menu and the arrow of the hero land.
+    expect(document.getElementById('team')).toHaveClass('team-section');
   });
 
   test('renders the footer', () => {
@@ -65,5 +74,14 @@ describe('HomePage (hero osé sans voile)', () => {
     const css = fs.readFileSync(path.join(__dirname, '..', 'App.css'), 'utf8');
     expect(css).toMatch(/\.hero-section\s*\{[^}]*calc\(100vh - 64px\)/);
     expect(css).toMatch(/\.hero-section\s*\{[^}]*calc\(100svh - 64px\)/);
+  });
+
+  test('App.css stacks the hero on upright screens, tablets included', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'App.css'), 'utf8');
+    expect(css).toMatch(
+      /@media[^{]*max-width:\s*767px[^{]*orientation:\s*portrait[^{]*\{\s*\.hero-section\s*\{[^}]*min-height:\s*0/
+    );
   });
 });

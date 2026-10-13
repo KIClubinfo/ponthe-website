@@ -7,7 +7,7 @@ import Cookies from 'js-cookie';
 import GalleryLink from './GalleryLink';
 import CustomNavbar from './Navbar'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { TextField, Button, Stack, Select, MenuItem } from '@mui/material';
+import { TextField, Select, MenuItem } from '@mui/material';
 
 export default function Gallery(){
     const [addModalState, setaddModalState] = useState(false);
@@ -100,38 +100,65 @@ export default function Gallery(){
     return(
       <>
         <CustomNavbar/>
-        <div className="introductive-content">
-          <Stack direction="row" alignItems="center" gap={1}>
-            <span className='centered-button'><AddCircleOutlineIcon className="add-icon" onClick={openModal}/></span>
-          </Stack>
+        <div className="page-head">
+          <div className="page-head-text">
+            <h1 className="gallery-title">Gestion des galeries</h1>
+            <p className="page-meta">{galleriesComp.length} galerie{galleriesComp.length > 1 ? 's' : ''}, toutes visibilités confondues</p>
+          </div>
+          <div className="page-head-actions">
+            <button type="button" className="p-btn p-btn-primary" onClick={openModal}>
+              <AddCircleOutlineIcon/>
+              Nouvelle galerie
+            </button>
+          </div>
         </div>
-        <Container fluid>
-          <Row className='g-1'>
-              {galleriesComp}
-          </Row>
-        </Container>
+        <div className="gallery-grid-plain">
+          <Container fluid>
+            <Row className="g-2 g-sm-3 g-lg-4">
+                {galleriesComp}
+            </Row>
+          </Container>
+        </div>
         {addModalState && (
           <div className='pic-modal'>
             <div ref={ref} className='add-modal-content'>
-            <span className='close-white-modal' onClick={closeModal}>&times;</span>
+              <span className='close-white-modal' onClick={closeModal}>&times;</span>
+              <h2 className="add-modal-title">Nouvelle galerie</h2>
               <form ref={ref2} onSubmit={onSubmit}>
-                <TextField className="add-modal-textfield" color='secondary' value={name} type="text" label="Nom" onChange={e =>  setName(e.target.value)} fullWidth/>
-                <TextField className="add-modal-textfield" color='secondary' value={description} type="text" label="Description" onChange={e =>  setDescription(e.target.value)} fullWidth/>
-                <Select className="add-modal-textfield" value={visibility} onChange={e => setVisibility(e.target.value)} label="Visibilité" fullWidth >
-                  <MenuItem value={'privée'}>Privée</MenuItem>
-                  <MenuItem value={'école'}>École</MenuItem>
-                  <MenuItem value={'publique'}>Publique</MenuItem>
-                </Select>
-                <Select className="add-modal-textfield" value={type} onChange={e => setType(e.target.value)} label="Type" fullWidth >
-                  <MenuItem value={'photo'}>Photo</MenuItem>
-                  <MenuItem value={'video'}>Vidéo</MenuItem>
-                </Select>
-                <Select className="add-modal-textfield" value={view} onChange={e => setView(e.target.value)} label="Type" fullWidth >
-                  <MenuItem value={'galerie'}>Galerie</MenuItem>
-                  <MenuItem value={'exposition'}>Exposition</MenuItem>
-                </Select>
-                <p style={{color: 'red'}}>{error}</p>
-                <Button className="add-modal-create-button" variant='outlined' color='secondary' onClick={onSubmit} fullWidth>Créer</Button>
+                <label className="add-modal-field">
+                  <span className="add-modal-label">Nom</span>
+                  <TextField value={name} type="text" size="small" onChange={e =>  setName(e.target.value)} fullWidth/>
+                </label>
+                <label className="add-modal-field">
+                  <span className="add-modal-label">Description</span>
+                  <TextField value={description} type="text" size="small" onChange={e =>  setDescription(e.target.value)} fullWidth/>
+                </label>
+                <div className="add-modal-field">
+                  <span className="add-modal-label">Visibilité</span>
+                  <Select value={visibility} size="small" onChange={e => setVisibility(e.target.value)} fullWidth >
+                    <MenuItem value={'privée'}>Privée</MenuItem>
+                    <MenuItem value={'école'}>École</MenuItem>
+                    <MenuItem value={'publique'}>Publique</MenuItem>
+                  </Select>
+                </div>
+                <div className="add-modal-field">
+                  <span className="add-modal-label">Contenu</span>
+                  <Select value={type} size="small" onChange={e => setType(e.target.value)} fullWidth >
+                    <MenuItem value={'photo'}>Photo</MenuItem>
+                    <MenuItem value={'video'}>Vidéo</MenuItem>
+                  </Select>
+                </div>
+                <div className="add-modal-field">
+                  <span className="add-modal-label">Rangée parmi les</span>
+                  <Select value={view} size="small" onChange={e => setView(e.target.value)} fullWidth >
+                    <MenuItem value={'galerie'}>Galeries</MenuItem>
+                    <MenuItem value={'exposition'}>Expositions</MenuItem>
+                  </Select>
+                </div>
+                <p className="add-modal-error">{error}</p>
+                <div className="add-modal-actions">
+                  <button type="button" className="p-btn p-btn-primary" onClick={onSubmit}>Créer</button>
+                </div>
               </form>
             </div>
           </div>

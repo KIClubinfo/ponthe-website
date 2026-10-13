@@ -41,13 +41,22 @@ describe('Galleries (page liste des galeries)', () => {
     jest.clearAllMocks();
   });
 
-  test('renders the pervenche banner with the poster title and yellow accent', async () => {
+  test('renders the pervenche banner with the title and the count of the year', async () => {
     render(<Galleries view="galerie" />);
     await waitFor(() =>
-      expect(screen.getByText('GALERIES')).toBeInTheDocument()
+      expect(screen.getByText('1 galerie en 2025-2026')).toBeInTheDocument()
     );
-    expect(screen.getByText('ERIES')).toBeInTheDocument();
-    expect(screen.getByText('GALERIES').closest('.hero-banner')).toBeInTheDocument();
+    const title = screen.getByRole('heading', { level: 1, name: 'Galeries' });
+    expect(title.closest('.hero-banner')).toBeInTheDocument();
+  });
+
+  test('the count follows the year picked', async () => {
+    render(<Galleries view="galerie" />);
+    await waitFor(() =>
+      expect(screen.getByText('1 galerie en 2025-2026')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole('button', { name: '2023-2024' }));
+    expect(screen.getByText('0 galerie en 2023-2024')).toBeInTheDocument();
   });
 
   test('renders one pill per year, the first one active', async () => {
@@ -74,12 +83,12 @@ describe('Galleries (page liste des galeries)', () => {
     expect(screen.getByRole('button', { name: '2025-2026' })).not.toHaveClass('active');
   });
 
-  test('exposition view titles the banner EXPOSITIONS', async () => {
+  test('exposition view titles the banner Expositions', async () => {
     render(<Galleries view="exposition" />);
     await waitFor(() =>
-      expect(screen.getByText('EXPOSITIONS')).toBeInTheDocument()
+      expect(screen.getByText('1 exposition en 2025-2026')).toBeInTheDocument()
     );
-    expect(screen.getByText('ITIONS')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Expositions' })).toBeInTheDocument();
   });
 
   test('no years available renders no pill and no mosaic (no crash)', async () => {
@@ -100,7 +109,8 @@ describe('Galleries (page liste des galeries)', () => {
         expect.anything()
       )
     );
-    expect(screen.getByText('GALERIES')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Galeries' })).toBeInTheDocument();
+    expect(screen.queryByText(/galerie en/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '2025-2026' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('gallery-mosaic')).not.toBeInTheDocument();
   });

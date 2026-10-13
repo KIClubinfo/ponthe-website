@@ -5,12 +5,11 @@ import Col from 'react-bootstrap/Col';
 
 const GalleryLink = (props) => {
     return(
-          <Col xs="6" lg="4" xl="3">
+          <Col xs="6" md="4" xl="3">
             <a className="gallery-card-affiche" href={props.link}>
               <div className="gallery-image-container">
-                <img className="galleries-img" src={props.sticker} alt={props.title}/>
+                <img className="galleries-img" src={props.sticker} alt={props.title} loading="lazy"/>
               </div>
-              <div className="gallery-card-footer-strip"></div>
               <h3 className="gallery-title-label">{props.title}</h3>
             </a>
           </Col>
